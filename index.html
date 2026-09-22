@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nimbloom - Giroscopio y Cámara</title>
+    <title>Nimbloom - Anclaje Fijo AR</title>
     <style>
         body,
         html {
@@ -17,7 +17,6 @@
             font-family: sans-serif;
         }
 
-        /* Video de la cámara de fondo */
         #camara-video {
             position: absolute;
             top: 0;
@@ -28,7 +27,6 @@
             z-index: 1;
         }
 
-        /* Lienzo 3D de Three.js encima del video */
         #canvas-3d {
             position: absolute;
             top: 0;
@@ -39,7 +37,6 @@
             pointer-events: none;
         }
 
-        /* Interfaz de usuario */
         #ui {
             position: absolute;
             bottom: 40px;
@@ -77,19 +74,14 @@
 
 <body>
 
-    <!-- Elemento de video para la cámara trasera -->
     <video id="camara-video" autoplay playsinline muted></video>
-
-    <!-- Canvas donde Three.js renderizará el objeto 3D -->
     <canvas id="canvas-3d"></canvas>
 
-    <!-- Interfaz de inicio de permisos -->
     <div id="ui">
-        <div id="info">Toca el botón para activar la cámara y el giroscopio</div>
+        <div id="info">Toca para iniciar y quédate mirando al frente para fijar la esfera</div>
         <button id="btn-iniciar">INICIAR EXPERIENCIA</button>
     </div>
 
-    <!-- Importar Three.js desde CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
@@ -98,10 +90,13 @@
         const videoElement = document.getElementById('camara-video');
 
         let scene, camera, renderer, esfera;
+        const targetQuaternion = new THREE.Quaternion();
+        const zee = new THREE.Vector3(0, 0, 1);
+        const gq = new THREE.Quaternion();
+        const europaQuaternion = new THREE.Euler();
 
         btnIniciar.addEventListener('click', async () => {
             try {
-                // 1. Activar la cámara trasera del celular
                 const constraints = {
                     video: {
                         facingMode: {
@@ -119,7 +114,6 @@
                 }
                 videoElement.srcObject = stream;
 
-                // 2. Solicitar permisos de giroscopio en iOS (si aplica)
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
                     .requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
@@ -129,13 +123,8 @@
                     }
                 }
 
-                // Ocultar menú de inicio
                 document.getElementById('ui').style.display = 'none';
-
-                // 3. Inicializar entorno 3D
                 init3D();
-
-                // 4. Escuchar el movimiento del giroscopio
                 window.addEventListener('deviceorientation', handleOrientation, true);
 
             } catch (error) {
@@ -156,7 +145,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            // Crear una esfera provisional (simulando una nube)
+            // Crear esfera (nube provisional)
             const geometry = new THREE.SphereGeometry(1, 32, 32);
             const material = new THREE.MeshBasicMaterial({
                 color: 0xffffff,
@@ -164,8 +153,8 @@
             });
             esfera = new THREE.Mesh(geometry, material);
 
-            // Ubicarla al frente en el espacio virtual
-            esfera.position.set(0, 0, -5);
+            // Ubicar la esfera fija a 4 metros exactamente frente a donde arrancas la app
+            esfera.position.set(0, 0, -4);
             scene.add(esfera);
 
             window.addEventListener('resize', onWindowResize, false);
@@ -173,18 +162,26 @@
         }
 
         function handleOrientation(event) {
-            let beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-            let gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
+            // Conversión matemática estándar para alinear los ejes del giroscopio del celular con Three.js
+            const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
+            const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
+            const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
+            const orient = window.orientation ? THREE.MathUtils.degToRad(window.orientation) : 0;
 
-            // Vincular la rotación del celular a la cámara virtual
-            camera.rotation.x = beta - Math.PI / 2;
-            camera.rotation.y = gamma;
+            europaQuaternion.set(beta, alpha, -gamma, 'YXZ');
+            targetQuaternion.setFromEuler(europaQuaternion);
+
+            // Ajustar orientación al plano de la pantalla
+            targetQuaternion.multiply(gq.setFromAxisAngle(zee, -orient));
+
+            // Aplicar rotación absoluta a la cámara virtual del mundo 3D
+            camera.quaternion.copy(targetQuaternion);
         }
 
         function animate() {
             requestAnimationFrame(animate);
             if (esfera) {
-                esfera.rotation.y += 0.01; // Rotación estética de la figura
+                esfera.rotation.y += 0.01;
             }
             renderer.render(scene, camera);
         }
