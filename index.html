@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nimbloom - Nubes 3D AR</title>
+    <title>Nimbloom</title>
     <style>
         body,
         html {
@@ -51,16 +51,42 @@
             pointer-events: none;
         }
 
+        /* Contador de nubes abajo a la derecha, bajito */
+        #contador-nubes {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            z-index: 20;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            pointer-events: none;
+            display: none;
+            /* Se muestra al iniciar */
+        }
+
         #ui {
             position: absolute;
-            bottom: 40px;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             z-index: 10;
             text-align: center;
             width: 90%;
             max-width: 400px;
             pointer-events: none;
+        }
+
+        h1.titulo-juego {
+            color: #ffffff;
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
         }
 
         button {
@@ -78,26 +104,30 @@
         }
 
         #info {
-            color: white;
+            color: #ddd;
             background: rgba(0, 0, 0, 0.7);
-            padding: 10px 15px;
+            padding: 12px 18px;
             border-radius: 12px;
             font-size: 14px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             pointer-events: auto;
+            line-height: 1.4;
         }
     </style>
 </head>
 
 <body>
 
-    <div id="version-tag">version 1.6</div>
+    <div id="version-tag">version 1.7</div>
+    <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
-        <div id="info">Apunta con el celular a tu habitación y toca Iniciar.</div>
+        <h1 class="titulo-juego">Nimbloom</h1>
+        <div id="info">Apunta con el celular a tu habitación y toca Iniciar. Arrastra las nubes para unirlas y hacerlas
+            crecer.</div>
         <button id="btn-iniciar">INICIAR EXPERIENCIA</button>
     </div>
 
@@ -107,6 +137,7 @@
         const btnIniciar = document.getElementById('btn-iniciar');
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
+        const contadorDiv = document.getElementById('contador-nubes');
 
         let scene, camera, renderer;
         let nubes = [];
@@ -116,7 +147,6 @@
         let planoArrastre = new THREE.Plane();
         let puntoInterseccion = new THREE.Vector3();
 
-        let initialQuaternion = null;
         let isCalibrated = false;
         const targetQuaternion = new THREE.Quaternion();
         const zee = new THREE.Vector3(0, 0, 1);
@@ -153,6 +183,7 @@
                 }
 
                 document.getElementById('ui').style.display = 'none';
+                contadorDiv.style.display = 'block';
                 init3D();
                 window.addEventListener('deviceorientation', handleOrientation, true);
 
@@ -174,15 +205,20 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            const posicionesIniciales = [
-                new THREE.Vector3(0, 0, -4), // Frente
-                new THREE.Vector3(3, 0, -3), // Derecha
-                new THREE.Vector3(-3, 0, -3), // Izquierda
-                new THREE.Vector3(0, 2, -4) // Arriba
+            // 8 posiciones variadas a distintas distancias y alturas en la habitación
+            const posicionesVariadas = [
+                new THREE.Vector3(0, 0.2, -3.5), // Frente cerca
+                new THREE.Vector3(2.5, 0.5, -4.5), // Derecha media
+                new THREE.Vector3(-2.8, -0.2, -4), // Izquierda media
+                new THREE.Vector3(1.2, 1.8, -3), // Arriba derecha
+                new THREE.Vector3(-1.5, 1.5, -5), // Arriba izquierda lejos
+                new THREE.Vector3(4, -0.5, -6), // Muy a la derecha lejos
+                new THREE.Vector3(-4, 0.2, -5.5), // Muy a la izquierda lejos
+                new THREE.Vector3(0, -1, -4.5) // Abajo frente
             ];
 
-            posicionesIniciales.forEach((pos, index) => {
-                const nubeGrupo = crearModeloNube();
+            posicionesVariadas.forEach((pos, index) => {
+                const nubeGrupo = crearModeloNubeRealista();
                 nubeGrupo.position.copy(pos);
                 nubeGrupo.userData = {
                     id: index,
@@ -192,6 +228,8 @@
                 nubes.push(nubeGrupo);
             });
 
+            actualizarContador();
+
             window.addEventListener('pointerdown', onPointerDown, false);
             window.addEventListener('pointermove', onPointerMove, false);
             window.addEventListener('pointerup', onPointerUp, false);
@@ -200,54 +238,59 @@
             animate();
         }
 
-        // Función para construir una nube 3D orgánica uniendo varias esferas
-        function crearModeloNube() {
+        // Modelo mejorado para que parezca una nube real y orgánica de algodón
+        function crearModeloNubeRealista() {
             const grupo = new THREE.Group();
 
-            // Material blanco suave y opaco para simular algodón de nube
             const materialNube = new THREE.MeshLambertMaterial({
                 color: 0xffffff,
-                flatShading: true
+                flatShading: true,
+                transparent: true,
+                opacity: 0.92
             });
 
-            // Añadir luz ambiental para que las nubes 3D tengan volumen y sombras suaves
             if (!scene.getObjectByName('luzAmbiental')) {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
                 ambientLight.name = 'luzAmbiental';
                 scene.add(ambientLight);
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-                directionalLight.position.set(5, 10, 7);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+                directionalLight.position.set(5, 12, 8);
                 scene.add(directionalLight);
             }
 
-            // Geometrías secundarias para formar los bultos de la nube
-            const bultos = [{
+            // Estructura densa con centro achatado y bultos superpuestos para forma orgánica
+            const partesNube = [{
                     pos: [0, 0, 0],
-                    radio: 0.7
-                },
+                    escala: [1.2, 0.7, 0.8]
+                }, // Base central
                 {
-                    pos: [0.5, 0.2, 0],
-                    radio: 0.5
-                },
+                    pos: [-0.5, 0.1, 0.0],
+                    escala: [0.8, 0.6, 0.7]
+                }, // Bulto izquierdo
                 {
-                    pos: [-0.5, 0.1, 0.1],
-                    radio: 0.5
-                },
+                    pos: [0.5, 0.15, -0.1],
+                    escala: [0.85, 0.65, 0.75]
+                }, // Bulto derecho
                 {
-                    pos: [0.2, -0.3, -0.2],
-                    radio: 0.4
-                },
+                    pos: [0.2, 0.35, 0.1],
+                    escala: [0.65, 0.55, 0.6]
+                }, // Superior derecho
                 {
-                    pos: [-0.2, -0.2, 0.2],
-                    radio: 0.4
-                }
+                    pos: [-0.2, 0.3, -0.1],
+                    escala: [0.7, 0.5, 0.65]
+                }, // Superior izquierdo
+                {
+                    pos: [0, -0.25, 0.0],
+                    escala: [0.9, 0.4, 0.7]
+                } // Base inferior plana
             ];
 
-            bultos.forEach(b => {
-                const geo = new THREE.SphereGeometry(b.radio, 16, 16);
+            partesNube.forEach(p => {
+                const geo = new THREE.SphereGeometry(0.6, 20, 20);
                 const mesh = new THREE.Mesh(geo, materialNube);
-                mesh.position.set(b.pos[0], b.pos[1], b.pos[2]);
+                mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
+                mesh.scale.set(p.escala[0], p.escala[1], p.escala[2]);
                 grupo.add(mesh);
             });
 
@@ -259,11 +302,9 @@
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
-            // Mapeamos los hijos de los grupos para el Raycaster
             const intersects = raycaster.intersectObjects(nubes, true);
 
             if (intersects.length > 0) {
-                // Encontrar el grupo raíz de la nube seleccionada
                 let obj = intersects[0].object;
                 while (obj.parent && obj.parent !== scene) {
                     obj = obj.parent;
@@ -306,10 +347,16 @@
 
                         scene.remove(n2);
                         nubes.splice(j, 1);
+
+                        actualizarContador();
                         return;
                     }
                 }
             }
+        }
+
+        function actualizarContador() {
+            contadorDiv.innerText = "Nubes: " + nubes.length;
         }
 
         function handleOrientation(event) {
@@ -334,9 +381,7 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            nubes.forEach(nube => {
-                nube.rotation.y += 0.005;
-            });
+            // Quitamos la rotación sobre su eje para que queden completamente estáticas en el espacio
 
             verificarFusion();
 
