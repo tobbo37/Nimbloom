@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nimbloom - AR Fijo</title>
+    <title>Nimbloom - Nubes 3D AR</title>
     <style>
         body,
         html {
@@ -91,13 +91,13 @@
 
 <body>
 
-    <div id="version-tag">version 1.5</div>
+    <div id="version-tag">version 1.6</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
-        <div id="info">Mira al frente, mantén firme el celular y toca Iniciar.</div>
+        <div id="info">Apunta con el celular a tu habitación y toca Iniciar.</div>
         <button id="btn-iniciar">INICIAR EXPERIENCIA</button>
     </div>
 
@@ -109,14 +109,13 @@
         const videoElement = document.getElementById('camara-video');
 
         let scene, camera, renderer;
-        let esferas = [];
+        let nubes = [];
         let raycaster = new THREE.Raycaster();
         let mouse = new THREE.Vector2();
-        let esferaArrastrada = null;
+        let nubeArrastrada = null;
         let planoArrastre = new THREE.Plane();
         let puntoInterseccion = new THREE.Vector3();
 
-        // Variables para estabilizar y calibrar el giroscopio
         let initialQuaternion = null;
         let isCalibrated = false;
         const targetQuaternion = new THREE.Quaternion();
@@ -182,21 +181,15 @@
                 new THREE.Vector3(0, 2, -4) // Arriba
             ];
 
-            const materialNube = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                wireframe: true
-            });
-
             posicionesIniciales.forEach((pos, index) => {
-                const geometria = new THREE.SphereGeometry(0.8, 24, 24);
-                const esfera = new THREE.Mesh(geometria, materialNube);
-                esfera.position.copy(pos);
-                esfera.userData = {
+                const nubeGrupo = crearModeloNube();
+                nubeGrupo.position.copy(pos);
+                nubeGrupo.userData = {
                     id: index,
                     tamano: 1
                 };
-                scene.add(esfera);
-                esferas.push(esfera);
+                scene.add(nubeGrupo);
+                nubes.push(nubeGrupo);
             });
 
             window.addEventListener('pointerdown', onPointerDown, false);
@@ -207,22 +200,82 @@
             animate();
         }
 
+        // Función para construir una nube 3D orgánica uniendo varias esferas
+        function crearModeloNube() {
+            const grupo = new THREE.Group();
+
+            // Material blanco suave y opaco para simular algodón de nube
+            const materialNube = new THREE.MeshLambertMaterial({
+                color: 0xffffff,
+                flatShading: true
+            });
+
+            // Añadir luz ambiental para que las nubes 3D tengan volumen y sombras suaves
+            if (!scene.getObjectByName('luzAmbiental')) {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                ambientLight.name = 'luzAmbiental';
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                directionalLight.position.set(5, 10, 7);
+                scene.add(directionalLight);
+            }
+
+            // Geometrías secundarias para formar los bultos de la nube
+            const bultos = [{
+                    pos: [0, 0, 0],
+                    radio: 0.7
+                },
+                {
+                    pos: [0.5, 0.2, 0],
+                    radio: 0.5
+                },
+                {
+                    pos: [-0.5, 0.1, 0.1],
+                    radio: 0.5
+                },
+                {
+                    pos: [0.2, -0.3, -0.2],
+                    radio: 0.4
+                },
+                {
+                    pos: [-0.2, -0.2, 0.2],
+                    radio: 0.4
+                }
+            ];
+
+            bultos.forEach(b => {
+                const geo = new THREE.SphereGeometry(b.radio, 16, 16);
+                const mesh = new THREE.Mesh(geo, materialNube);
+                mesh.position.set(b.pos[0], b.pos[1], b.pos[2]);
+                grupo.add(mesh);
+            });
+
+            return grupo;
+        }
+
         function onPointerDown(event) {
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(esferas);
+            // Mapeamos los hijos de los grupos para el Raycaster
+            const intersects = raycaster.intersectObjects(nubes, true);
 
             if (intersects.length > 0) {
-                esferaArrastrada = intersects[0].object;
+                // Encontrar el grupo raíz de la nube seleccionada
+                let obj = intersects[0].object;
+                while (obj.parent && obj.parent !== scene) {
+                    obj = obj.parent;
+                }
+                nubeArrastrada = obj;
                 const normalCamara = camera.getWorldDirection(new THREE.Vector3()).negate();
-                planoArrastre.setFromNormalAndCoplanarPoint(normalCamara, esferaArrastrada.position);
+                planoArrastre.setFromNormalAndCoplanarPoint(normalCamara, nubeArrastrada.position);
             }
         }
 
         function onPointerMove(event) {
-            if (!esferaArrastrada) return;
+            if (!nubeArrastrada) return;
 
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -230,29 +283,29 @@
             raycaster.setFromCamera(mouse, camera);
 
             if (raycaster.ray.intersectPlane(planoArrastre, puntoInterseccion)) {
-                esferaArrastrada.position.copy(puntoInterseccion);
+                nubeArrastrada.position.copy(puntoInterseccion);
             }
         }
 
         function onPointerUp() {
-            esferaArrastrada = null;
+            nubeArrastrada = null;
         }
 
         function verificarFusion() {
-            for (let i = 0; i < esferas.length; i++) {
-                for (let j = i + 1; j < esferas.length; j++) {
-                    const e1 = esferas[i];
-                    const e2 = esferas[j];
+            for (let i = 0; i < nubes.length; i++) {
+                for (let j = i + 1; j < nubes.length; j++) {
+                    const n1 = nubes[i];
+                    const n2 = nubes[j];
 
-                    const distancia = e1.position.distanceTo(e2.position);
+                    const distancia = n1.position.distanceTo(n2.position);
 
-                    if (distancia < 1.2) {
-                        e1.userData.tamano += e2.userData.tamano;
-                        const nuevaEscala = Math.cbrt(e1.userData.tamano);
-                        e1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
+                    if (distancia < 1.3) {
+                        n1.userData.tamano += n2.userData.tamano;
+                        const nuevaEscala = Math.cbrt(n1.userData.tamano);
+                        n1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
 
-                        scene.remove(e2);
-                        esferas.splice(j, 1);
+                        scene.remove(n2);
+                        nubes.splice(j, 1);
                         return;
                     }
                 }
@@ -269,13 +322,11 @@
             targetQuaternion.setFromEuler(europaQuaternion);
             targetQuaternion.multiply(gq.setFromAxisAngle(zee, -orient));
 
-            // Calibración inicial al primer evento para fijar el origen del espacio
             if (!isCalibrated) {
                 correctionQuaternion.copy(targetQuaternion).invert();
                 isCalibrated = true;
             }
 
-            // Aplicar la corrección para mantener el anclaje perfecto en la habitación
             targetQuaternion.premultiply(correctionQuaternion);
             camera.quaternion.copy(targetQuaternion);
         }
@@ -283,8 +334,8 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            esferas.forEach(esfera => {
-                esfera.rotation.y += 0.01;
+            nubes.forEach(nube => {
+                nube.rotation.y += 0.005;
             });
 
             verificarFusion();
