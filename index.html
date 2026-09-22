@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Nimbloom - Anclaje Fijo AR</title>
+    <title>Nimbloom - Fusión de Nubes AR</title>
     <style>
         body,
         html {
@@ -15,6 +15,8 @@
             overflow: hidden;
             background-color: black;
             font-family: sans-serif;
+            touch-action: none;
+            /* Evita pull-to-refresh y zoom accidental */
         }
 
         #camara-video {
@@ -34,7 +36,6 @@
             width: 100%;
             height: 100%;
             z-index: 2;
-            pointer-events: none;
         }
 
         #ui {
@@ -46,6 +47,8 @@
             text-align: center;
             width: 90%;
             max-width: 400px;
+            pointer-events: none;
+            /* Permite tocar el canvas detrás */
         }
 
         button {
@@ -59,6 +62,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
             cursor: pointer;
             width: 100%;
+            pointer-events: auto;
         }
 
         #info {
@@ -68,6 +72,7 @@
             border-radius: 12px;
             font-size: 14px;
             margin-bottom: 15px;
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -78,7 +83,7 @@
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
-        <div id="info">Toca para iniciar y quédate mirando al frente para fijar la esfera</div>
+        <div id="info">Toca para iniciar. Mantén presionado y arrastra las nubes para unirlas.</div>
         <button id="btn-iniciar">INICIAR EXPERIENCIA</button>
     </div>
 
@@ -89,7 +94,14 @@
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
 
-        let scene, camera, renderer, esfera;
+        let scene, camera, renderer;
+        let esferas = [];
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let esferaArrastrada = null;
+        let planoArrastre = new THREE.Plane();
+        let puntoInterseccion = new THREE.Vector3();
+
         const targetQuaternion = new THREE.Quaternion();
         const zee = new THREE.Vector3(0, 0, 1);
         const gq = new THREE.Quaternion();
@@ -145,24 +157,100 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            // Crear esfera (nube provisional)
-            const geometry = new THREE.SphereGeometry(1, 32, 32);
-            const material = new THREE.MeshBasicMaterial({
+            // Crear 4 nubes (esferas) distribuidas en distintas posiciones iniciales
+            const posicionesIniciales = [
+                new THREE.Vector3(0, 0, -4), // Frente
+                new THREE.Vector3(3, 0, -3), // Derecha
+                new THREE.Vector3(-3, 0, -3), // Izquierda
+                new THREE.Vector3(0, 2, -4) // Arriba
+            ];
+
+            const materialNube = new THREE.MeshBasicMaterial({
                 color: 0xffffff,
                 wireframe: true
             });
-            esfera = new THREE.Mesh(geometry, material);
 
-            // Ubicar la esfera fija a 4 metros exactamente frente a donde arrancas la app
-            esfera.position.set(0, 0, -4);
-            scene.add(esfera);
+            posicionesIniciales.forEach((pos, index) => {
+                const geometria = new THREE.SphereGeometry(0.8, 24, 24);
+                const esfera = new THREE.Mesh(geometria, materialNube);
+                esfera.position.copy(pos);
+                esfera.userData = {
+                    id: index,
+                    tamano: 1
+                }; // Propiedad de tamaño
+                scene.add(esfera);
+                esferas.push(esfera);
+            });
+
+            // Eventos táctiles para arrastrar las nubes
+            window.addEventListener('pointerdown', onPointerDown, false);
+            window.addEventListener('pointermove', onPointerMove, false);
+            window.addEventListener('pointerup', onPointerUp, false);
 
             window.addEventListener('resize', onWindowResize, false);
             animate();
         }
 
+        function onPointerDown(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(esferas);
+
+            if (intersects.length > 0) {
+                esferaArrastrada = intersects[0].object;
+                // Crear un plano invisible frente a la cámara para mantener la profundidad al arrastrar
+                const normalCamara = camera.getWorldDirection(new THREE.Vector3()).negate();
+                planoArrastre.setFromNormalAndCoplanarPoint(normalCamara, esferaArrastrada.position);
+            }
+        }
+
+        function onPointerMove(event) {
+            if (!esferaArrastrada) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            if (raycaster.ray.intersectPlane(planoArrastre, puntoInterseccion)) {
+                esferaArrastrada.position.copy(puntoInterseccion);
+            }
+        }
+
+        function onPointerUp() {
+            esferaArrastrada = null;
+        }
+
+        function verificarFusion() {
+            // Revisar si alguna esfera está cerca de otra para fusionarlas
+            for (let i = 0; i < esferas.length; i++) {
+                for (let j = i + 1; j < esferas.length; j++) {
+                    const e1 = esferas[i];
+                    const e2 = esferas[j];
+
+                    const distancia = e1.position.distanceTo(e2.position);
+
+                    // Si están a menos de 1.2 metros de distancia, se fusionan
+                    if (distancia < 1.2) {
+                        // e1 absorbe a e2
+                        e1.userData.tamano += e2.userData.tamano;
+
+                        // Aumentar la escala visual de e1 en base a cuántas absorbió
+                        const nuevaEscala = Math.cbrt(e1.userData.tamano); // Crecimiento proporcional en 3D
+                        e1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
+
+                        // Eliminar e2 de la escena y del arreglo
+                        scene.remove(e2);
+                        esferas.splice(j, 1);
+                        return; // Salir para evitar errores en el ciclo
+                    }
+                }
+            }
+        }
+
         function handleOrientation(event) {
-            // Conversión matemática estándar para alinear los ejes del giroscopio del celular con Three.js
             const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
             const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
             const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
@@ -170,19 +258,21 @@
 
             europaQuaternion.set(beta, alpha, -gamma, 'YXZ');
             targetQuaternion.setFromEuler(europaQuaternion);
-
-            // Ajustar orientación al plano de la pantalla
             targetQuaternion.multiply(gq.setFromAxisAngle(zee, -orient));
 
-            // Aplicar rotación absoluta a la cámara virtual del mundo 3D
             camera.quaternion.copy(targetQuaternion);
         }
 
         function animate() {
             requestAnimationFrame(animate);
-            if (esfera) {
+
+            // Rotación estética de las nubes y chequeo de fusiones
+            esferas.forEach(esfera => {
                 esfera.rotation.y += 0.01;
-            }
+            });
+
+            verificarFusion();
+
             renderer.render(scene, camera);
         }
 
