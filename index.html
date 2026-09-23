@@ -51,6 +51,23 @@
             pointer-events: none;
         }
 
+        /* Botón para recalibrar el centro del giroscopio */
+        #btn-recalibrar {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            display: none;
+            pointer-events: auto;
+        }
+
         #contador-nubes {
             position: absolute;
             bottom: 15px;
@@ -66,7 +83,6 @@
             display: none;
         }
 
-        /* Pantalla de victoria / cuenta regresiva */
         #pantalla-victoria {
             position: absolute;
             top: 50%;
@@ -109,6 +125,14 @@
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
         }
 
+        .texto-troll {
+            font-size: 10px;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
         #ui {
             position: absolute;
             top: 50%;
@@ -130,7 +154,7 @@
             text-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
         }
 
-        button {
+        .btn-principal {
             background-color: #ffcc00;
             border: none;
             color: #000;
@@ -159,14 +183,16 @@
 
 <body>
 
-    <div id="version-tag">version 1.8</div>
+    <button id="btn-recalibrar">⟲ Recalibrar</button>
+    <div id="version-tag">version 1.9</div>
     <div id="contador-nubes">Nubes: 8</div>
 
-    <!-- Pantalla final de victoria -->
     <div id="pantalla-victoria">
         <h1 class="titulo-nimbloom">NIMBLOOM</h1>
         <div id="reloj-regresivo">00h 00m 00s</div>
         <div id="sub-fecha">10 de octubre</div>
+        <div class="texto-troll">Hecho en Palestina. Felices 21, Martín (ojalá te sirva para aprobar diseño
+            multimedial).</div>
     </div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -174,15 +200,15 @@
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Apunta con el celular a tu habitación y toca Iniciar. Arrastra las nubes para unirlas todas en
-            una sola.</div>
-        <button id="btn-iniciar">INICIAR EXPERIENCIA</button>
+        <div id="info">Apunta al frente y toca Iniciar. Arrastra las nubes para unirlas todas en una sola.</div>
+        <button id="btn-iniciar" class="btn-principal">INICIAR EXPERIENCIA</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
         const btnIniciar = document.getElementById('btn-iniciar');
+        const btnRecalibrar = document.getElementById('btn-recalibrar');
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
@@ -199,7 +225,10 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
+
+        // Variables para suavizado (Slerp)
         const targetQuaternion = new THREE.Quaternion();
+        const currentDeviceQuaternion = new THREE.Quaternion();
         const zee = new THREE.Vector3(0, 0, 1);
         const gq = new THREE.Quaternion();
         const europaQuaternion = new THREE.Euler();
@@ -235,6 +264,7 @@
 
                 document.getElementById('ui').style.display = 'none';
                 contadorDiv.style.display = 'block';
+                btnRecalibrar.style.display = 'block'; // Mostrar botón de recalibrar
                 init3D();
                 window.addEventListener('deviceorientation', handleOrientation, true);
 
@@ -242,6 +272,11 @@
                 alert("Error: Asegúrate de usar HTTPS o permisos de cámara.");
                 infoDiv.innerText = "Error al iniciar: " + error;
             }
+        });
+
+        // Botón para resetear el origen de la cámara
+        btnRecalibrar.addEventListener('click', () => {
+            isCalibrated = false;
         });
 
         function init3D() {
@@ -283,14 +318,13 @@
             window.addEventListener('pointerdown', onPointerDown, false);
             window.addEventListener('pointermove', onPointerMove, false);
             window.addEventListener('pointerup', onPointerUp, false);
-
             window.addEventListener('resize', onWindowResize, false);
+
             animate();
         }
 
         function crearModeloNubeRealista() {
             const grupo = new THREE.Group();
-
             const materialNube = new THREE.MeshLambertMaterial({
                 color: 0xffffff,
                 flatShading: true,
@@ -389,25 +423,20 @@
                     const n1 = nubes[i];
                     const n2 = nubes[j];
 
-                    const distancia = n1.position.distanceTo(n2.position);
-
-                    // Margen de distancia amplio para asegurar que se junten sin importar tamaño
-                    if (distancia < 1.8) {
+                    if (n1.position.distanceTo(n2.position) < 1.8) {
                         n1.userData.tamano += n2.userData.tamano;
 
-                        // Escala proporcional adaptada para que crezcan masivamente hasta unirse en una sola
                         const nuevaEscala = Math.cbrt(n1.userData.tamano) * 1.15;
                         n1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
 
                         scene.remove(n2);
                         nubes.splice(j, 1);
-
                         actualizarContador();
 
-                        // Si queda solo 1 nube, activar animación y pantalla final de victoria
                         if (nubes.length === 1) {
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
+                            btnRecalibrar.style.display = 'none';
                             pantallaVictoria.style.display = 'block';
                         }
                         return;
@@ -423,7 +452,7 @@
         function actualizarContadorTiempo() {
             const ahora = new Date();
             let anioActual = ahora.getFullYear();
-            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0); // 10 de octubre (Mes 9 en JS)
+            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
 
             if (ahora > objetivo) {
                 objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
@@ -453,22 +482,24 @@
                 isCalibrated = true;
             }
 
-            targetQuaternion.premultiply(correctionQuaternion);
-            camera.quaternion.copy(targetQuaternion);
+            // Calculamos el cuaternión deseado pero no lo aplicamos de golpe a la cámara
+            let tempQuat = new THREE.Quaternion().copy(targetQuaternion).premultiply(correctionQuaternion);
+            currentDeviceQuaternion.copy(tempQuat);
         }
 
         function animate() {
             requestAnimationFrame(animate);
 
+            // Slerp: Suaviza la transición entre donde está la cámara y hacia donde debería estar
+            camera.quaternion.slerp(currentDeviceQuaternion, 0.08);
+
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
                 const tiempo = Date.now() * 0.003;
 
-                // Animación de giro sobre sí misma (volteándose)
                 nubeFinal.rotation.y += 0.02;
                 nubeFinal.rotation.x = Math.sin(tiempo * 0.5) * 0.3;
 
-                // Animación de brillo y cambio de colores dinámicos
                 nubeFinal.traverse((child) => {
                     if (child.isMesh) {
                         const tonoHue = (Date.now() * 0.05) % 360;
