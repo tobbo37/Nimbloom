@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Nimbloom</title>
 
-    <!-- Integración de las tipografías del manual de marca -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&family=Quicksand:wght@400;600;700&display=swap"
@@ -22,7 +21,6 @@
             overflow: hidden;
             background-color: black;
             font-family: 'Quicksand', sans-serif;
-            /* Tipografía para textos y UI */
             touch-action: none;
         }
 
@@ -51,9 +49,7 @@
             right: 15px;
             z-index: 20;
             color: #FDF7FF;
-            /* Blanco luminosidad */
             background: rgba(165, 88, 204, 0.5);
-            /* Violeta con transparencia */
             padding: 5px 10px;
             border-radius: 8px;
             font-size: 12px;
@@ -67,9 +63,7 @@
             left: 15px;
             z-index: 20;
             background: rgba(194, 194, 244, 0.8);
-            /* Lavanda */
             color: #A558CC;
-            /* Violeta */
             border: 2px solid #FDF7FF;
             padding: 8px 15px;
             border-radius: 8px;
@@ -86,9 +80,7 @@
             right: 15px;
             z-index: 20;
             color: #A558CC;
-            /* Violeta */
             background: rgba(253, 247, 255, 0.8);
-            /* Blanco transparente */
             padding: 8px 14px;
             border-radius: 12px;
             font-size: 14px;
@@ -111,24 +103,19 @@
 
         h1.titulo-juego {
             color: #FDF7FF;
-            /* Blanco nube */
             font-family: 'Cherry Bomb One', cursive;
-            /* Tipografía para títulos */
             font-size: 50px;
             font-weight: 400;
             letter-spacing: 2px;
             margin-bottom: 10px;
             text-shadow: 0 4px 15px rgba(217, 170, 241, 0.8);
-            /* Sombra Lila */
             -webkit-text-stroke: 1px #A558CC;
         }
 
         .btn-principal {
             background-color: #A558CC;
-            /* Violeta boton primario */
             border: 2px solid #FDF7FF;
             color: #FDF7FF;
-            /* Blanco para textos sobre fondos claros/oscuros */
             padding: 15px 30px;
             font-size: 18px;
             font-weight: 700;
@@ -141,9 +128,15 @@
             transition: all 0.3s ease;
         }
 
-        .btn-principal:active {
+        .btn-principal:disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            border-color: #999;
+        }
+
+        .btn-principal:not(:disabled):active {
             background-color: #FFFEAE;
-            /* Amarillo al presionar (Acento) */
             color: #A558CC;
         }
 
@@ -165,7 +158,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.13</div>
+    <div id="version-tag">version 1.14</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -173,13 +166,14 @@
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <!-- Tono de voz sereno y cercano -->
         <div id="info">Tomate un momento para vos. Respirá a tu ritmo, arrastrá las nubes para abrazarlas y descubrí el
             florecimiento.</div>
-        <button id="btn-iniciar" class="btn-principal">CONECTAR</button>
+        <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
+    <!-- Librerías de Three.js y GLTFLoader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
     <script>
         const btnIniciar = document.getElementById('btn-iniciar');
@@ -198,6 +192,10 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
+        let modeloGLTFBase = null;
+
+        // >>> AJUSTA ESTE VALOR SI TU NUBE CARGA MUY GRANDE O MUY CHICA <<<
+        const ESCALA_MODELO_GLTF = 1.0;
 
         let textCanvas, textTexture, textMesh;
 
@@ -208,7 +206,6 @@
         const europaQuaternion = new THREE.Euler();
         const correctionQuaternion = new THREE.Quaternion();
 
-        // Colores del Manual de Marca Nimbloom
         const COLORES = {
             violeta: 0xA558CC,
             lavanda: 0xC2C2F4,
@@ -217,6 +214,50 @@
             amarillo: 0xFFFEAE
         };
 
+        // 1. CARGA DEL MODELO GLB
+        const loader = new THREE.GLTFLoader();
+        loader.load('model/nube.glb', function (gltf) {
+            modeloGLTFBase = gltf.scene;
+
+            // Reemplazamos los materiales del modelo por los de Nimbloom
+            const materialNube = new THREE.MeshLambertMaterial({
+                color: COLORES.blanco,
+                flatShading: true,
+                transparent: true,
+                opacity: 0.95
+            });
+
+            const materialContorno = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                side: THREE.BackSide
+            });
+
+            // Extraemos las mallas para aplicarles el color y el contorno negro
+            const mallas = [];
+            modeloGLTFBase.traverse((child) => {
+                if (child.isMesh) mallas.push(child);
+            });
+
+            mallas.forEach((mesh) => {
+                mesh.material = materialNube;
+
+                // Generar contorno calcado
+                const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
+                // Escalar ligeramente para que asome por detrás
+                contorno.scale.set(1.05, 1.05, 1.05);
+                mesh.add(contorno);
+            });
+
+            // Habilitar el botón una vez que el modelo está listo
+            btnIniciar.innerText = "CONECTAR";
+            btnIniciar.disabled = false;
+
+        }, undefined, function (error) {
+            console.error(error);
+            infoDiv.innerText = "Error al cargar model/nube.glb. Verifica la ruta.";
+        });
+
+        // 2. LÓGICA DE INICIO
         btnIniciar.addEventListener('click', async () => {
             try {
                 const constraints = {
@@ -246,7 +287,6 @@
                 contadorDiv.style.display = 'block';
                 btnRecalibrar.style.display = 'block';
 
-                // Forzar carga de fuentes en el canvas asegurándolas en el DOM oculto
                 document.fonts.ready.then(() => {
                     init3D();
                     window.addEventListener('deviceorientation', handleOrientation, true);
@@ -274,6 +314,16 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
+            if (!scene.getObjectByName('luzAmbiental')) {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+                ambientLight.name = 'luzAmbiental';
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.6);
+                directionalLight.position.set(5, 12, 8);
+                scene.add(directionalLight);
+            }
+
             const posicionesCercanas = [
                 new THREE.Vector3(0, 0.2, -2.5),
                 new THREE.Vector3(1.5, 0.5, -3.0),
@@ -286,12 +336,17 @@
             ];
 
             posicionesCercanas.forEach((pos, index) => {
-                const nubeGrupo = crearModeloNubeRealista();
+                const nubeGrupo = new THREE.Group();
+                const nubeVisual = modeloGLTFBase.clone();
+                nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
+
+                nubeGrupo.add(nubeVisual);
                 nubeGrupo.position.copy(pos);
                 nubeGrupo.userData = {
                     id: index,
                     tamano: 1
                 };
+
                 scene.add(nubeGrupo);
                 nubes.push(nubeGrupo);
             });
@@ -304,74 +359,6 @@
             window.addEventListener('resize', onWindowResize, false);
 
             animate();
-        }
-
-        function crearModeloNubeRealista() {
-            const grupo = new THREE.Group();
-
-            // Las nubes inician con el Blanco de luminosidad
-            const materialNube = new THREE.MeshLambertMaterial({
-                color: COLORES.blanco,
-                flatShading: true,
-                transparent: true,
-                opacity: 0.95
-            });
-            // El contorno negro se mantiene
-            const materialContorno = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                side: THREE.BackSide
-            });
-
-            if (!scene.getObjectByName('luzAmbiental')) {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-                ambientLight.name = 'luzAmbiental';
-                scene.add(ambientLight);
-
-                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.6);
-                directionalLight.position.set(5, 12, 8);
-                scene.add(directionalLight);
-            }
-
-            const partesNube = [{
-                    pos: [0, 0, 0],
-                    escala: [1.2, 0.7, 0.8]
-                },
-                {
-                    pos: [-0.5, 0.1, 0.0],
-                    escala: [0.8, 0.6, 0.7]
-                },
-                {
-                    pos: [0.5, 0.15, -0.1],
-                    escala: [0.85, 0.65, 0.75]
-                },
-                {
-                    pos: [0.2, 0.35, 0.1],
-                    escala: [0.65, 0.55, 0.6]
-                },
-                {
-                    pos: [-0.2, 0.3, -0.1],
-                    escala: [0.7, 0.5, 0.65]
-                },
-                {
-                    pos: [0, -0.25, 0.0],
-                    escala: [0.9, 0.4, 0.7]
-                }
-            ];
-
-            partesNube.forEach(p => {
-                const geo = new THREE.SphereGeometry(0.35, 20, 20);
-                const mesh = new THREE.Mesh(geo, materialNube);
-                mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
-                mesh.scale.set(p.escala[0], p.escala[1], p.escala[2]);
-                grupo.add(mesh);
-
-                const contorno = new THREE.Mesh(geo, materialContorno);
-                contorno.position.copy(mesh.position);
-                contorno.scale.set(p.escala[0] * 1.15, p.escala[1] * 1.15, p.escala[2] * 1.15);
-                grupo.add(contorno);
-            });
-
-            return grupo;
         }
 
         function onPointerDown(event) {
@@ -423,6 +410,7 @@
             });
             textMesh = new THREE.Mesh(planeGeo, planeMat);
 
+            // Puedes ajustar el -0.42 si el texto queda muy hundido o muy despegado de TU modelo 3D
             textMesh.position.set(0, 0, -0.42);
             textMesh.rotation.y = Math.PI;
             nubeFinal.add(textMesh);
@@ -446,26 +434,23 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Título en tipografía Cherry Bomb One y color Amarillo
-            ctx.shadowColor = 'rgba(165, 88, 204, 0.9)'; // Sombra Violeta
+            ctx.shadowColor = 'rgba(165, 88, 204, 0.9)';
             ctx.shadowBlur = 15;
-            ctx.fillStyle = '#FFFEAE'; // Amarillo
+            ctx.fillStyle = '#FFFEAE';
             ctx.font = '400 120px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 300);
 
-            // Reloj en tipografía Quicksand y color Violeta sobre nube blanca
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#A558CC'; // Violeta
+            ctx.fillStyle = '#A558CC';
             ctx.font = '700 90px "Quicksand"';
             ctx.fillText(
                 `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 450);
 
-            ctx.fillStyle = '#C2C2F4'; // Lavanda oscuro para contraste sutil
+            ctx.fillStyle = '#C2C2F4';
             ctx.font = '700 55px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 570);
 
-            // Textos solicitados
             ctx.fillStyle = '#A558CC';
             ctx.font = '700 26px "Quicksand"';
             ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 720);
@@ -496,7 +481,6 @@
                         nubes.splice(j, 1);
                         actualizarContador();
 
-                        // Ocurre el evento Nimbloom (el abrazo completado)
                         if (nubes.length === 1) {
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
@@ -548,11 +532,9 @@
                 const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                 nubeFinal.quaternion.slerp(targetRot, 0.04);
 
-                // Representación del "cambio lumínico" usando la paleta oficial
                 nubeFinal.traverse((child) => {
                     if (child.isMesh && child !== textMesh && child.material.side !== THREE.BackSide) {
                         const tiempo = Date.now() * 0.001;
-                        // Interpola suavemente entre los colores Lavanda (#C2C2F4) y Lila (#D9AAF1)
                         const r = 194 + Math.sin(tiempo) * 23;
                         const g = 194 - Math.sin(tiempo) * 24;
                         const b = 244 + Math.sin(tiempo) * -3;
