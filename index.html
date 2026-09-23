@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Nimbloom</title>
-
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&family=Quicksand:wght@400;600;700&display=swap"
-        rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body,
-        html {
+        body, html {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -23,7 +20,6 @@
             font-family: 'Quicksand', sans-serif;
             touch-action: none;
         }
-
         #camara-video {
             position: absolute;
             top: 0;
@@ -33,7 +29,6 @@
             object-fit: cover;
             z-index: 1;
         }
-
         #canvas-3d {
             position: absolute;
             top: 0;
@@ -42,28 +37,26 @@
             height: 100%;
             z-index: 2;
         }
-
         #version-tag {
             position: absolute;
             top: 15px;
             right: 15px;
             z-index: 20;
             color: #FDF7FF;
-            background: rgba(165, 88, 204, 0.5);
+            background: rgba(165, 88, 204, 0.5); /* Violeta[cite: 1] */
             padding: 5px 10px;
             border-radius: 8px;
             font-size: 12px;
             font-weight: bold;
             pointer-events: none;
         }
-
         #btn-recalibrar {
             position: absolute;
             top: 15px;
             left: 15px;
             z-index: 20;
-            background: rgba(194, 194, 244, 0.8);
-            color: #A558CC;
+            background: rgba(194, 194, 244, 0.8); /* Lavanda[cite: 1] */
+            color: #A558CC; /* Violeta[cite: 1] */
             border: 2px solid #FDF7FF;
             padding: 8px 15px;
             border-radius: 8px;
@@ -73,7 +66,6 @@
             display: none;
             pointer-events: auto;
         }
-
         #contador-nubes {
             position: absolute;
             bottom: 15px;
@@ -88,29 +80,22 @@
             pointer-events: none;
             display: none;
         }
-
+        
+        /* Indicadores de dirección (Radar off-screen 360°) */
         .flecha-guia {
             position: absolute;
             z-index: 15;
-            color: #FFFEAE;
-            font-size: 24px;
+            color: #FFFEAE; /* Amarillo acento[cite: 1] */
+            font-size: 28px;
             font-weight: bold;
-            text-shadow: 0 0 8px #A558CC;
+            text-shadow: 0 0 10px #A558CC;
             pointer-events: none;
             display: none;
-            animation: latido 1.2s infinite alternate;
+            animation: latido 1s infinite alternate;
         }
-
         @keyframes latido {
-            from {
-                transform: scale(1);
-                opacity: 0.7;
-            }
-
-            to {
-                transform: scale(1.3);
-                opacity: 1;
-            }
+            from { transform: scale(1); opacity: 0.7; }
+            to { transform: scale(1.3); opacity: 1; }
         }
 
         #ui {
@@ -124,10 +109,9 @@
             max-width: 400px;
             pointer-events: none;
         }
-
         h1.titulo-juego {
             color: #FDF7FF;
-            font-family: 'Cherry Bomb One', cursive;
+            font-family: 'Cherry Bomb One', cursive; /* Tipografía oficial para títulos[cite: 1] */
             font-size: 50px;
             font-weight: 400;
             letter-spacing: 2px;
@@ -135,35 +119,31 @@
             text-shadow: 0 4px 15px rgba(217, 170, 241, 0.8);
             -webkit-text-stroke: 1px #A558CC;
         }
-
         .btn-principal {
-            background-color: #A558CC;
+            background-color: #A558CC; /* Violeta[cite: 1] */
             border: 2px solid #FDF7FF;
             color: #FDF7FF;
             padding: 15px 30px;
             font-size: 18px;
             font-weight: 700;
             border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             cursor: pointer;
             width: 100%;
             pointer-events: auto;
             font-family: 'Quicksand', sans-serif;
             transition: all 0.3s ease;
         }
-
         .btn-principal:disabled {
             background-color: #ccc;
             color: #666;
             cursor: not-allowed;
             border-color: #999;
         }
-
         .btn-principal:not(:disabled):active {
-            background-color: #FFFEAE;
+            background-color: #FFFEAE; /* Amarillo acento[cite: 1] */
             color: #A558CC;
         }
-
         #info {
             color: #A558CC;
             background: rgba(253, 247, 255, 0.9);
@@ -178,13 +158,13 @@
         }
     </style>
 </head>
-
 <body>
 
-    <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.22</div>
+    <button id="btn-recalibrar">⟲ Centrar vista</button>
+    <div id="version-tag">version 1.24</div>
     <div id="contador-nubes">Nubes: 8</div>
 
+    <!-- Flechas guía para el universo 360° -->
     <div id="guia-arriba" class="flecha-guia" style="top: 20px; left: 50%; transform: translateX(-50%);">▲</div>
     <div id="guia-abajo" class="flecha-guia" style="bottom: 60px; left: 50%; transform: translateX(-50%);">▼</div>
     <div id="guia-izquierda" class="flecha-guia" style="top: 50%; left: 20px; transform: translateY(-50%);">◀</div>
@@ -195,8 +175,7 @@
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Tomate un momento para vos. Buscá las nubes bien distribuidas por el espacio y unelas con calma.
-        </div>
+        <div id="info">Tomate un momento para vos[cite: 1]. Girate y buscá las nubes por toda la habitación; seguí las flechas si alguna se oculta.</div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
@@ -209,7 +188,7 @@
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
-
+        
         const guiaArriba = document.getElementById('guia-arriba');
         const guiaAbajo = document.getElementById('guia-abajo');
         const guiaIzquierda = document.getElementById('guia-izquierda');
@@ -223,7 +202,7 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
-        let modeloGLTFBase = null;
+        let modeloGLTFBase = null; 
         let textCanvas, textTexture, textMesh;
 
         // ==========================================
@@ -233,7 +212,7 @@
         const TAMAÑO_TEXTO = 0.9;
         const ALTURA_TEXTO = 1.0;
         const PROFUNDIDAD_TEXTO = -0.5;
-        const ALTURA_MODELO_FINAL = -0.8;
+        const ALTURA_MODELO_FINAL = -0.8; 
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -243,6 +222,7 @@
         const europaQuaternion = new THREE.Euler();
         const correctionQuaternion = new THREE.Quaternion();
 
+        // Paleta oficial de marca Softscape / Nimbloom[cite: 1]
         const COLORES = {
             violeta: 0xA558CC,
             lavanda: 0xC2C2F4,
@@ -252,60 +232,38 @@
         };
 
         const loader = new THREE.GLTFLoader();
-        loader.load('model/nube.glb', function (gltf) {
+        loader.load('model/nube.glb', function(gltf) {
             modeloGLTFBase = gltf.scene;
-
-            const materialNube = new THREE.MeshLambertMaterial({
-                color: COLORES.blanco,
-                flatShading: true,
-                transparent: true,
-                opacity: 0.95
-            });
-            const materialContorno = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                side: THREE.BackSide
-            });
+            
+            const materialNube = new THREE.MeshLambertMaterial({ color: COLORES.blanco, flatShading: true, transparent: true, opacity: 0.95 });
+            const materialContorno = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.BackSide });
 
             const mallas = [];
-            modeloGLTFBase.traverse((child) => {
-                if (child.isMesh) mallas.push(child);
-            });
+            modeloGLTFBase.traverse((child) => { if (child.isMesh) mallas.push(child); });
 
             mallas.forEach((mesh) => {
                 mesh.material = materialNube;
                 const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
-                contorno.scale.set(1.05, 1.05, 1.05);
-                mesh.add(contorno);
+                contorno.scale.set(1.05, 1.05, 1.05); 
+                mesh.add(contorno); 
             });
 
             btnIniciar.innerText = "CONECTAR";
             btnIniciar.disabled = false;
-
-        }, undefined, function (error) {
+            
+        }, undefined, function(error) {
             infoDiv.innerText = "Error al cargar model/nube.glb. Verifica la ruta.";
         });
 
         btnIniciar.addEventListener('click', async () => {
             try {
-                const constraints = {
-                    video: {
-                        facingMode: {
-                            exact: "environment"
-                        }
-                    }
-                };
+                const constraints = { video: { facingMode: { exact: "environment" } } };
                 let stream;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                } catch (e) {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: true
-                    });
-                }
+                try { stream = await navigator.mediaDevices.getUserMedia(constraints); } 
+                catch (e) { stream = await navigator.mediaDevices.getUserMedia({ video: true }); }
                 videoElement.srcObject = stream;
-
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
-                    .requestPermission === 'function') {
+                
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
                     if (permissionState !== 'granted') return;
                 }
@@ -313,7 +271,7 @@
                 document.getElementById('ui').style.display = 'none';
                 contadorDiv.style.display = 'block';
                 btnRecalibrar.style.display = 'block';
-
+                
                 document.fonts.ready.then(() => {
                     init3D();
                     window.addEventListener('deviceorientation', handleOrientation, true);
@@ -324,20 +282,15 @@
             }
         });
 
-        btnRecalibrar.addEventListener('click', () => {
-            isCalibrated = false;
-        });
+        btnRecalibrar.addEventListener('click', () => { isCalibrated = false; });
 
         function init3D() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            scene.add(camera);
+            scene.add(camera); 
 
             const canvas = document.getElementById('canvas-3d');
-            renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                alpha: true
-            });
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -345,36 +298,33 @@
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
                 ambientLight.name = 'luzAmbiental';
                 scene.add(ambientLight);
-
+                
                 const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.6);
                 directionalLight.position.set(5, 12, 8);
                 scene.add(directionalLight);
             }
 
-            // POSICIONES AMPLIAMENTE SEPARADAS: Mayor distancia entre sí y en profundidad para evitar auto-fusión
-            const posicionesAmplias = [
-                new THREE.Vector3(0, 0.8, -4.0), // 1. Centro superior profundo
-                new THREE.Vector3(3.2, 0.2, -3.0), // 2. Derecha lejana
-                new THREE.Vector3(-3.2, 0.2, -3.0), // 3. Izquierda lejana
-                new THREE.Vector3(2.5, 2.0, -2.5), // 4. Arriba derecha
-                new THREE.Vector3(-2.5, 2.0, -2.5), // 5. Arriba izquierda
-                new THREE.Vector3(1.5, -1.5, -3.5), // 6. Abajo derecha
-                new THREE.Vector3(-1.5, -1.5, -3.5), // 7. Abajo izquierda
-                new THREE.Vector3(0, -1.8, -2.0) // 8. Abajo cerca centro
+            // DISTRIBUCIÓN 360° REAL: Las 8 nubes rodeando al usuario por completo en la habitación
+            const posiciones360 = [
+                new THREE.Vector3(0, 0.5, -3.2),    // 1. Frente
+                new THREE.Vector3(2.8, 0.2, -2.2),  // 2. Derecha
+                new THREE.Vector3(-2.8, 0.2, -2.2), // 3. Izquierda
+                new THREE.Vector3(2.2, 1.8, 1.5),   // 4. Derecha y atrás
+                new THREE.Vector3(-2.2, 1.8, 1.5),  // 5. Izquierda y atrás
+                new THREE.Vector3(0, 2.5, -1.0),    // 6. Arriba
+                new THREE.Vector3(0, -1.5, -2.5),   // 7. Abajo frente
+                new THREE.Vector3(0, 0.5, 3.5)      // 8. Totalmente a tus espaldas (¡girar 180°!)
             ];
 
-            posicionesAmplias.forEach((pos, index) => {
+            posiciones360.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
                 const nubeVisual = modeloGLTFBase.clone();
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
-
+                
                 nubeGrupo.add(nubeVisual);
                 nubeGrupo.position.copy(pos);
-                nubeGrupo.userData = {
-                    id: index,
-                    tamano: 1
-                };
-
+                nubeGrupo.userData = { id: index, tamano: 1 };
+                
                 scene.add(nubeGrupo);
                 nubes.push(nubeGrupo);
             });
@@ -385,7 +335,7 @@
             window.addEventListener('pointermove', onPointerMove, false);
             window.addEventListener('pointerup', onPointerUp, false);
             window.addEventListener('resize', onWindowResize, false);
-
+            
             animate();
         }
 
@@ -399,9 +349,7 @@
 
             if (intersects.length > 0) {
                 let obj = intersects[0].object;
-                while (obj.parent && obj.parent !== scene) {
-                    obj = obj.parent;
-                }
+                while (obj.parent && obj.parent !== scene) { obj = obj.parent; }
                 nubeArrastrada = obj;
                 nubeArrastrada.userData.distanciaFija = nubeArrastrada.position.distanceTo(camera.position);
             }
@@ -414,13 +362,10 @@
 
             raycaster.setFromCamera(mouse, camera);
             const dirRayo = raycaster.ray.direction.clone();
-            nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData
-                .distanciaFija));
+            nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData.distanciaFija));
         }
 
-        function onPointerUp() {
-            nubeArrastrada = null;
-        }
+        function onPointerUp() { nubeArrastrada = null; }
 
         function crearLienzoTexto3D(nubeFinal) {
             textCanvas = document.createElement('canvas');
@@ -429,33 +374,33 @@
             textTexture = new THREE.CanvasTexture(textCanvas);
             textTexture.minFilter = THREE.LinearFilter;
 
-            const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
-
-            const planeMat = new THREE.MeshBasicMaterial({
-                map: textTexture,
-                transparent: true,
+            const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO); 
+            
+            const planeMat = new THREE.MeshBasicMaterial({ 
+                map: textTexture, 
+                transparent: true, 
                 depthWrite: false,
-                depthTest: false
+                depthTest: false 
             });
-
+            
             textMesh = new THREE.Mesh(planeGeo, planeMat);
             textMesh.renderOrder = 999;
-
-            textMesh.position.set(0, ALTURA_TEXTO, PROFUNDIDAD_TEXTO);
-            textMesh.rotation.y = Math.PI;
-
+            
+            textMesh.position.set(0, ALTURA_TEXTO, PROFUNDIDAD_TEXTO); 
+            textMesh.rotation.y = Math.PI; 
+            
             textMesh.scale.set(0.01, 0.01, 0.01);
             nubeFinal.add(textMesh);
         }
 
         function actualizarTexturaNube() {
-            if (!textCanvas) return;
+            if(!textCanvas) return;
             const ctx = textCanvas.getContext('2d');
             ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-
+            
             const ahora = new Date();
             let anioActual = ahora.getFullYear();
-            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
+            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0); 
             if (ahora > objetivo) objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
 
             const dif = objetivo - ahora;
@@ -466,21 +411,19 @@
 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-
-            ctx.shadowColor = 'rgba(165, 88, 204, 0.9)';
+            
+            ctx.shadowColor = 'rgba(165, 88, 204, 0.9)'; 
             ctx.shadowBlur = 15;
-            ctx.fillStyle = '#FFFEAE';
+            ctx.fillStyle = '#FFFEAE'; // Amarillo[cite: 1]
             ctx.font = '400 120px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 250);
-
+            
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#A558CC';
+            ctx.fillStyle = '#A558CC'; // Violeta[cite: 1]
             ctx.font = '700 80px "Quicksand"';
-            ctx.fillText(
-                `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
-                512, 420);
-
-            ctx.fillStyle = '#C2C2F4';
+            ctx.fillText(`${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`, 512, 420);
+            
+            ctx.fillStyle = '#C2C2F4'; // Lavanda[cite: 1]
             ctx.font = '700 50px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 540);
 
@@ -489,10 +432,11 @@
             ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 700);
             ctx.font = '600 24px "Quicksand"';
             ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 750);
-
+            
             textTexture.needsUpdate = true;
         }
 
+        // Radar visual para orientar al usuario en el giro físico 360°
         function actualizarGuiasVisuales() {
             if (juegoTerminado || nubes.length === 0) {
                 guiaArriba.style.display = 'none';
@@ -543,10 +487,10 @@
                     const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.6;
                     const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.6;
                     const umbralFusion = (radioVisual1 + radioVisual2) * 1.8;
-
+                    
                     if (distancia < umbralFusion) {
                         n1.userData.tamano += n2.userData.tamano;
-
+                        
                         const baseScale = ESCALA_MODELO_GLTF;
                         const growthFactor = Math.cbrt(n1.userData.tamano);
                         const nuevaEscala = baseScale * growthFactor;
@@ -564,7 +508,7 @@
                             guiaAbajo.style.display = 'none';
                             guiaIzquierda.style.display = 'none';
                             guiaDerecha.style.display = 'none';
-
+                            
                             crearLienzoTexto3D(n1);
                             camera.attach(n1);
                         }
@@ -574,9 +518,7 @@
             }
         }
 
-        function actualizarContador() {
-            contadorDiv.innerText = "Nubes: " + nubes.length;
-        }
+        function actualizarContador() { contadorDiv.innerText = "Nubes: " + nubes.length; }
 
         function handleOrientation(event) {
             const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
@@ -600,19 +542,19 @@
         function animate() {
             requestAnimationFrame(animate);
 
+            // Giroscopio puro de 360° físico
             camera.quaternion.slerp(currentDeviceQuaternion, 0.08);
 
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
 
                 nubeFinal.position.lerp(new THREE.Vector3(0, ALTURA_MODELO_FINAL, -3.5), 0.04);
-
+                
                 const finalScale = ESCALA_MODELO_GLTF * 4;
-                nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale * 1.8, finalScale * 1.1, finalScale *
-                    1.1), 0.03);
+                nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale * 1.8, finalScale * 1.1, finalScale * 1.1), 0.03);
 
                 if (textMesh) {
-                    const textoScale = finalScale * 3.5;
+                    const textoScale = finalScale * 3.5; 
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
@@ -625,7 +567,7 @@
                         const r = 194 + Math.sin(tiempo) * 23;
                         const g = 194 - Math.sin(tiempo) * 24;
                         const b = 244 + Math.sin(tiempo) * -3;
-                        child.material.color.setRGB(r / 255, g / 255, b / 255);
+                        child.material.color.setRGB(r/255, g/255, b/255);
                     }
                 });
 
@@ -645,5 +587,4 @@
         }
     </script>
 </body>
-
 </html>
