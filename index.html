@@ -51,7 +51,6 @@
             pointer-events: none;
         }
 
-        /* Botón para recalibrar el centro del giroscopio */
         #btn-recalibrar {
             position: absolute;
             top: 15px;
@@ -152,11 +151,12 @@
             letter-spacing: 2px;
             margin-bottom: 10px;
             text-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
+            -webkit-text-stroke: 1px black;
         }
 
         .btn-principal {
             background-color: #ffcc00;
-            border: none;
+            border: 2px solid black;
             color: #000;
             padding: 15px 30px;
             font-size: 18px;
@@ -171,6 +171,7 @@
         #info {
             color: #ddd;
             background: rgba(0, 0, 0, 0.7);
+            border: 1px solid black;
             padding: 12px 18px;
             border-radius: 12px;
             font-size: 14px;
@@ -184,7 +185,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Recalibrar</button>
-    <div id="version-tag">version 1.9</div>
+    <div id="version-tag">version 1.10</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <div id="pantalla-victoria">
@@ -226,7 +227,6 @@
         let isCalibrated = false;
         let juegoTerminado = false;
 
-        // Variables para suavizado (Slerp)
         const targetQuaternion = new THREE.Quaternion();
         const currentDeviceQuaternion = new THREE.Quaternion();
         const zee = new THREE.Vector3(0, 0, 1);
@@ -264,7 +264,7 @@
 
                 document.getElementById('ui').style.display = 'none';
                 contadorDiv.style.display = 'block';
-                btnRecalibrar.style.display = 'block'; // Mostrar botón de recalibrar
+                btnRecalibrar.style.display = 'block';
                 init3D();
                 window.addEventListener('deviceorientation', handleOrientation, true);
 
@@ -274,7 +274,6 @@
             }
         });
 
-        // Botón para resetear el origen de la cámara
         btnRecalibrar.addEventListener('click', () => {
             isCalibrated = false;
         });
@@ -291,18 +290,19 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            const posicionesVariadas = [
-                new THREE.Vector3(0, 0.2, -3.5),
-                new THREE.Vector3(2.5, 0.5, -4.5),
-                new THREE.Vector3(-2.8, -0.2, -4),
-                new THREE.Vector3(1.2, 1.8, -3),
-                new THREE.Vector3(-1.5, 1.5, -5),
-                new THREE.Vector3(4, -0.5, -6),
-                new THREE.Vector3(-4, 0.2, -5.5),
-                new THREE.Vector3(0, -1, -4.5)
+            // Nubes más cercanas y centradas para que no se pierdan
+            const posicionesCercanas = [
+                new THREE.Vector3(0, 0.2, -2.5),
+                new THREE.Vector3(1.5, 0.5, -3.0),
+                new THREE.Vector3(-1.8, -0.2, -2.8),
+                new THREE.Vector3(0.8, 1.2, -3.2),
+                new THREE.Vector3(-1.2, 1.0, -3.5),
+                new THREE.Vector3(2.0, -0.5, -3.0),
+                new THREE.Vector3(-2.0, 0.2, -3.2),
+                new THREE.Vector3(0, -1, -2.8)
             ];
 
-            posicionesVariadas.forEach((pos, index) => {
+            posicionesCercanas.forEach((pos, index) => {
                 const nubeGrupo = crearModeloNubeRealista();
                 nubeGrupo.position.copy(pos);
                 nubeGrupo.userData = {
@@ -325,19 +325,25 @@
 
         function crearModeloNubeRealista() {
             const grupo = new THREE.Group();
+
             const materialNube = new THREE.MeshLambertMaterial({
                 color: 0xffffff,
                 flatShading: true,
                 transparent: true,
-                opacity: 0.92
+                opacity: 0.95
+            });
+            // Material para el contorno negro
+            const materialContorno = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                side: THREE.BackSide
             });
 
             if (!scene.getObjectByName('luzAmbiental')) {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
                 ambientLight.name = 'luzAmbiental';
                 scene.add(ambientLight);
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
                 directionalLight.position.set(5, 12, 8);
                 scene.add(directionalLight);
             }
@@ -369,11 +375,21 @@
             ];
 
             partesNube.forEach(p => {
-                const geo = new THREE.SphereGeometry(0.6, 20, 20);
+                // Radio base más chico para que ocupen menos lugar
+                const geo = new THREE.SphereGeometry(0.35, 20, 20);
+
+                // Malla principal blanca
                 const mesh = new THREE.Mesh(geo, materialNube);
                 mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
                 mesh.scale.set(p.escala[0], p.escala[1], p.escala[2]);
                 grupo.add(mesh);
+
+                // Malla invertida para el contorno negro
+                const contorno = new THREE.Mesh(geo, materialContorno);
+                contorno.position.copy(mesh.position);
+                // Escala levemente mayor para que asome el borde negro
+                contorno.scale.set(p.escala[0] * 1.15, p.escala[1] * 1.15, p.escala[2] * 1.15);
+                grupo.add(contorno);
             });
 
             return grupo;
@@ -423,10 +439,18 @@
                     const n1 = nubes[i];
                     const n2 = nubes[j];
 
-                    if (n1.position.distanceTo(n2.position) < 1.8) {
+                    const distancia = n1.position.distanceTo(n2.position);
+
+                    // Cálculo dinámico de los radios para que las colisiones sean perfectas sin importar el tamaño
+                    const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.4;
+                    const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.4;
+                    const umbralColision = radioVisual1 + radioVisual2 + 0.5;
+
+                    if (distancia < umbralColision) {
                         n1.userData.tamano += n2.userData.tamano;
 
-                        const nuevaEscala = Math.cbrt(n1.userData.tamano) * 1.15;
+                        // Escala más moderada para que la nube final no tape toda la cámara
+                        const nuevaEscala = Math.cbrt(n1.userData.tamano) * 0.65;
                         n1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
 
                         scene.remove(n2);
@@ -482,7 +506,6 @@
                 isCalibrated = true;
             }
 
-            // Calculamos el cuaternión deseado pero no lo aplicamos de golpe a la cámara
             let tempQuat = new THREE.Quaternion().copy(targetQuaternion).premultiply(correctionQuaternion);
             currentDeviceQuaternion.copy(tempQuat);
         }
@@ -490,7 +513,6 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Slerp: Suaviza la transición entre donde está la cámara y hacia donde debería estar
             camera.quaternion.slerp(currentDeviceQuaternion, 0.08);
 
             if (juegoTerminado && nubes.length > 0) {
@@ -501,7 +523,8 @@
                 nubeFinal.rotation.x = Math.sin(tiempo * 0.5) * 0.3;
 
                 nubeFinal.traverse((child) => {
-                    if (child.isMesh) {
+                    // Evitar que el contorno negro cambie de color
+                    if (child.isMesh && child.material.side !== THREE.BackSide) {
                         const tonoHue = (Date.now() * 0.05) % 360;
                         child.material.color.setHSL(tonoHue / 360, 0.8, 0.7);
                     }
