@@ -50,7 +50,6 @@
             z-index: 20;
             color: #FDF7FF;
             background: rgba(165, 88, 204, 0.5);
-            /* Violeta[cite: 1] */
             padding: 5px 10px;
             border-radius: 8px;
             font-size: 12px;
@@ -64,9 +63,7 @@
             left: 15px;
             z-index: 20;
             background: rgba(194, 194, 244, 0.8);
-            /* Lavanda[cite: 1] */
             color: #A558CC;
-            /* Violeta[cite: 1] */
             border: 2px solid #FDF7FF;
             padding: 8px 15px;
             border-radius: 8px;
@@ -92,12 +89,10 @@
             display: none;
         }
 
-        /* Indicadores de dirección (Radar off-screen 360°) */
         .flecha-guia {
             position: absolute;
             z-index: 15;
             color: #FFFEAE;
-            /* Amarillo acento[cite: 1] */
             font-size: 28px;
             font-weight: bold;
             text-shadow: 0 0 10px #A558CC;
@@ -133,7 +128,6 @@
         h1.titulo-juego {
             color: #FDF7FF;
             font-family: 'Cherry Bomb One', cursive;
-            /* Tipografía oficial para títulos[cite: 1] */
             font-size: 50px;
             font-weight: 400;
             letter-spacing: 2px;
@@ -144,7 +138,6 @@
 
         .btn-principal {
             background-color: #A558CC;
-            /* Violeta[cite: 1] */
             border: 2px solid #FDF7FF;
             color: #FDF7FF;
             padding: 15px 30px;
@@ -168,7 +161,6 @@
 
         .btn-principal:not(:disabled):active {
             background-color: #FFFEAE;
-            /* Amarillo acento[cite: 1] */
             color: #A558CC;
         }
 
@@ -178,11 +170,42 @@
             border: 1px solid #C2C2F4;
             padding: 15px 20px;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             pointer-events: auto;
-            line-height: 1.5;
+            line-height: 1.4;
+        }
+
+        .selector-container {
+            background: rgba(253, 247, 255, 0.9);
+            border: 1px solid #C2C2F4;
+            padding: 12px 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            pointer-events: auto;
+            text-align: left;
+        }
+
+        .selector-container label {
+            color: #A558CC;
+            font-weight: 700;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .selector-container select {
+            width: 100%;
+            background: #FDF7FF;
+            color: #A558CC;
+            border: 2px solid #C2C2F4;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: 'Quicksand', sans-serif;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -190,10 +213,9 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.24</div>
+    <div id="version-tag">version 1.25</div>
     <div id="contador-nubes">Nubes: 8</div>
 
-    <!-- Flechas guía para el universo 360° -->
     <div id="guia-arriba" class="flecha-guia" style="top: 20px; left: 50%; transform: translateX(-50%);">▲</div>
     <div id="guia-abajo" class="flecha-guia" style="bottom: 60px; left: 50%; transform: translateX(-50%);">▼</div>
     <div id="guia-izquierda" class="flecha-guia" style="top: 50%; left: 20px; transform: translateY(-50%);">◀</div>
@@ -204,8 +226,23 @@
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Tomate un momento para vos[cite: 1]. Girate y buscá las nubes por toda la habitación; seguí las
-            flechas si alguna se oculta.</div>
+        <div id="info">Tomate un momento para vos. Elegí la cantidad de nubes para probar y comenzá la experiencia.
+        </div>
+
+        <div class="selector-container">
+            <label for="select-nubes">Cantidad de nubes iniciales:</label>
+            <select id="select-nubes">
+                <option value="1">1 nube (Prueba directa de texto final)</option>
+                <option value="2" selected>2 nubes (Prueba rápida de fusión en PC)</option>
+                <option value="3">3 nubes</option>
+                <option value="4">4 nubes</option>
+                <option value="5">5 nubes</option>
+                <option value="6">6 nubes</option>
+                <option value="7">7 nubes</option>
+                <option value="8">8 nubes (Experiencia completa)</option>
+            </select>
+        </div>
+
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
@@ -218,6 +255,7 @@
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
+        const selectNubes = document.getElementById('select-nubes');
 
         const guiaArriba = document.getElementById('guia-arriba');
         const guiaAbajo = document.getElementById('guia-abajo');
@@ -238,7 +276,7 @@
         // ==========================================
         // VARIABLES DE AJUSTE
         // ==========================================
-        const ESCALA_MODELO_GLTF = 0.09;
+        const ESCALA_MODELO_GLTF = 0.2;
         const TAMAÑO_TEXTO = 0.9;
         const ALTURA_TEXTO = 1.0;
         const PROFUNDIDAD_TEXTO = -0.5;
@@ -252,7 +290,6 @@
         const europaQuaternion = new THREE.Euler();
         const correctionQuaternion = new THREE.Quaternion();
 
-        // Paleta oficial de marca Softscape / Nimbloom[cite: 1]
         const COLORES = {
             violeta: 0xA558CC,
             lavanda: 0xC2C2F4,
@@ -361,19 +398,23 @@
                 scene.add(directionalLight);
             }
 
-            // DISTRIBUCIÓN 360° REAL: Las 8 nubes rodeando al usuario por completo en la habitación
-            const posiciones360 = [
-                new THREE.Vector3(0, 0.5, -3.2), // 1. Frente
-                new THREE.Vector3(2.8, 0.2, -2.2), // 2. Derecha
-                new THREE.Vector3(-2.8, 0.2, -2.2), // 3. Izquierda
-                new THREE.Vector3(2.2, 1.8, 1.5), // 4. Derecha y atrás
-                new THREE.Vector3(-2.2, 1.8, 1.5), // 5. Izquierda y atrás
-                new THREE.Vector3(0, 2.5, -1.0), // 6. Arriba
-                new THREE.Vector3(0, -1.5, -2.5), // 7. Abajo frente
-                new THREE.Vector3(0, 0.5, 3.5) // 8. Totalmente a tus espaldas (¡girar 180°!)
+            // Cantidad de nubes elegida por el usuario en el menú
+            const cantidadSeleccionada = parseInt(selectNubes.value);
+
+            const posicionesTotales = [
+                new THREE.Vector3(0, 0.5, -2.5), // 1. Centro frente
+                new THREE.Vector3(1.5, 0.2, -2.2), // 2. Derecha cerca
+                new THREE.Vector3(-1.5, 0.2, -2.2), // 3. Izquierda cerca
+                new THREE.Vector3(2.0, 1.2, -2.0), // 4. Derecha arriba
+                new THREE.Vector3(-2.0, 1.2, -2.0), // 5. Izquierda arriba
+                new THREE.Vector3(0.8, -1.0, -2.3), // 6. Abajo derecha
+                new THREE.Vector3(-0.8, -1.0, -2.3), // 7. Abajo izquierda
+                new THREE.Vector3(0, 2.0, -2.0) // 8. Arriba centro
             ];
 
-            posiciones360.forEach((pos, index) => {
+            const posicionesUsar = posicionesTotales.slice(0, cantidadSeleccionada);
+
+            posicionesUsar.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
                 const nubeVisual = modeloGLTFBase.clone();
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
@@ -390,6 +431,15 @@
             });
 
             actualizarContador();
+
+            // Si el usuario eligió 1 sola nube, activamos el estado final inmediatamente para probar el texto
+            if (nubes.length === 1) {
+                juegoTerminado = true;
+                contadorDiv.style.display = 'none';
+                btnRecalibrar.style.display = 'none';
+                crearLienzoTexto3D(nubes[0]);
+                camera.attach(nubes[0]);
+            }
 
             window.addEventListener('pointerdown', onPointerDown, false);
             window.addEventListener('pointermove', onPointerMove, false);
@@ -479,28 +529,30 @@
 
             ctx.shadowColor = 'rgba(165, 88, 204, 0.9)';
             ctx.shadowBlur = 15;
-            ctx.fillStyle = '#FFFEAE'; // Amarillo[cite: 1]
+            ctx.fillStyle = '#FFFEAE';
             ctx.font = '400 120px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 250);
 
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#A558CC'; // Violeta[cite: 1]
+            ctx.fillStyle = '#A558CC';
             ctx.font = '700 80px "Quicksand"';
             ctx.fillText(
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 420);
 
-            ctx.fillStyle = '#C2C2F4'; // Lavanda[cite: 1]
+            ctx.fillStyle = '#C2C2F4';
             ctx.font = '700 50px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 540);
 
             ctx.fillStyle = '#A558CC';
             ctx.font = '700 28px "Quicksand"';
+            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 700);
+            ctx.font = '600 24px "Quicksand"';
+            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 750);
 
             textTexture.needsUpdate = true;
         }
 
-        // Radar visual para orientar al usuario en el giro físico 360°
         function actualizarGuiasVisuales() {
             if (juegoTerminado || nubes.length === 0) {
                 guiaArriba.style.display = 'none';
@@ -608,7 +660,6 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Giroscopio puro de 360° físico
             camera.quaternion.slerp(currentDeviceQuaternion, 0.08);
 
             if (juegoTerminado && nubes.length > 0) {
@@ -625,8 +676,8 @@
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
-                const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
-                nubeFinal.quaternion.slerp(targetRot, 0.04);
+                // Sin giros forzados ni volteos: la nube mantiene su orientación estable de frente
+                nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
 
                 nubeFinal.traverse((child) => {
                     if (child.isMesh && child !== textMesh && child.material.side !== THREE.BackSide) {
