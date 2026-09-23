@@ -82,56 +82,6 @@
             display: none;
         }
 
-        #pantalla-victoria {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 30;
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
-            display: none;
-            pointer-events: none;
-        }
-
-        h1.titulo-nimbloom {
-            color: #ffffff;
-            font-size: 50px;
-            font-weight: 900;
-            letter-spacing: 3px;
-            margin: 0 0 10px 0;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 204, 0, 0.6);
-        }
-
-        #reloj-regresivo {
-            color: #ffcc00;
-            font-size: 24px;
-            font-weight: bold;
-            background: rgba(0, 0, 0, 0.75);
-            padding: 12px 20px;
-            border-radius: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
-        }
-
-        #sub-fecha {
-            color: #ddd;
-            font-size: 16px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
-        }
-
-        .texto-troll {
-            font-size: 10px;
-            margin-top: 40px;
-            color: rgba(255, 255, 255, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
         #ui {
             position: absolute;
             top: 50%;
@@ -185,16 +135,8 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Recalibrar</button>
-    <div id="version-tag">version 1.10</div>
+    <div id="version-tag">version 1.11</div>
     <div id="contador-nubes">Nubes: 8</div>
-
-    <div id="pantalla-victoria">
-        <h1 class="titulo-nimbloom">NIMBLOOM</h1>
-        <div id="reloj-regresivo">00h 00m 00s</div>
-        <div id="sub-fecha">10 de octubre</div>
-        <div class="texto-troll">Hecho en Palestina. Felices 21, Martín (ojalá te sirva para aprobar diseño
-            multimedial).</div>
-    </div>
 
     <video id="camara-video" autoplay playsinline muted></video>
     <canvas id="canvas-3d"></canvas>
@@ -213,8 +155,6 @@
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
-        const pantallaVictoria = document.getElementById('pantalla-victoria');
-        const relojDiv = document.getElementById('reloj-regresivo');
 
         let scene, camera, renderer;
         let nubes = [];
@@ -226,6 +166,9 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
+
+        // Elementos para el texto 3D holográfico
+        let textCanvas, textTexture, textMesh;
 
         const targetQuaternion = new THREE.Quaternion();
         const currentDeviceQuaternion = new THREE.Quaternion();
@@ -281,6 +224,7 @@
         function init3D() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            scene.add(camera); // Importante para vincular objetos a la cámara luego
 
             const canvas = document.getElementById('canvas-3d');
             renderer = new THREE.WebGLRenderer({
@@ -290,7 +234,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            // Nubes más cercanas y centradas para que no se pierdan
             const posicionesCercanas = [
                 new THREE.Vector3(0, 0.2, -2.5),
                 new THREE.Vector3(1.5, 0.5, -3.0),
@@ -325,14 +268,12 @@
 
         function crearModeloNubeRealista() {
             const grupo = new THREE.Group();
-
             const materialNube = new THREE.MeshLambertMaterial({
                 color: 0xffffff,
                 flatShading: true,
                 transparent: true,
                 opacity: 0.95
             });
-            // Material para el contorno negro
             const materialContorno = new THREE.MeshBasicMaterial({
                 color: 0x000000,
                 side: THREE.BackSide
@@ -375,19 +316,14 @@
             ];
 
             partesNube.forEach(p => {
-                // Radio base más chico para que ocupen menos lugar
                 const geo = new THREE.SphereGeometry(0.35, 20, 20);
-
-                // Malla principal blanca
                 const mesh = new THREE.Mesh(geo, materialNube);
                 mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
                 mesh.scale.set(p.escala[0], p.escala[1], p.escala[2]);
                 grupo.add(mesh);
 
-                // Malla invertida para el contorno negro
                 const contorno = new THREE.Mesh(geo, materialContorno);
                 contorno.position.copy(mesh.position);
-                // Escala levemente mayor para que asome el borde negro
                 contorno.scale.set(p.escala[0] * 1.15, p.escala[1] * 1.15, p.escala[2] * 1.15);
                 grupo.add(contorno);
             });
@@ -416,12 +352,10 @@
 
         function onPointerMove(event) {
             if (!nubeArrastrada || juegoTerminado) return;
-
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
-
             if (raycaster.ray.intersectPlane(planoArrastre, puntoInterseccion)) {
                 nubeArrastrada.position.copy(puntoInterseccion);
             }
@@ -429,6 +363,74 @@
 
         function onPointerUp() {
             nubeArrastrada = null;
+        }
+
+        function crearLienzoTexto3D(nubeFinal) {
+            // Creamos un canvas virtual fuera de pantalla para escribir con HTML5 Canvas
+            textCanvas = document.createElement('canvas');
+            textCanvas.width = 1024;
+            textCanvas.height = 1024;
+            textTexture = new THREE.CanvasTexture(textCanvas);
+            textTexture.minFilter = THREE.LinearFilter;
+
+            const planeGeo = new THREE.PlaneGeometry(3.5, 3.5);
+            const planeMat = new THREE.MeshBasicMaterial({
+                map: textTexture,
+                transparent: true,
+                depthWrite: false
+            });
+            textMesh = new THREE.Mesh(planeGeo, planeMat);
+
+            // Lo pegamos a la parte TRASERA de la nube y lo damos vuelta
+            textMesh.position.set(0, 0, -1.0);
+            textMesh.rotation.y = Math.PI;
+            nubeFinal.add(textMesh);
+        }
+
+        function actualizarTexturaNube() {
+            if (!textCanvas) return;
+            const ctx = textCanvas.getContext('2d');
+            ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+
+            const ahora = new Date();
+            let anioActual = ahora.getFullYear();
+            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
+            if (ahora > objetivo) objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
+
+            const dif = objetivo - ahora;
+            const horas = Math.floor((dif % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutos = Math.floor((dif % (1000 * 60 * 60)) / (1000 * 60));
+            const segundos = Math.floor((dif % (1000 * 60)) / 1000);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            ctx.shadowColor = 'rgba(255, 204, 0, 0.9)';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 130px sans-serif';
+            ctx.fillText('NIMBLOOM', 512, 250);
+
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = 'bold 90px sans-serif';
+            ctx.fillText(
+                `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
+                512, 420);
+
+            ctx.shadowBlur = 5;
+            ctx.fillStyle = '#dddddd';
+            ctx.font = 'bold 60px sans-serif';
+            ctx.fillText('10 DE OCTUBRE', 512, 550);
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 750);
+            ctx.font = '24px sans-serif';
+            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 800);
+
+            textTexture.needsUpdate = true;
         }
 
         function verificarFusion() {
@@ -440,16 +442,11 @@
                     const n2 = nubes[j];
 
                     const distancia = n1.position.distanceTo(n2.position);
-
-                    // Cálculo dinámico de los radios para que las colisiones sean perfectas sin importar el tamaño
                     const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.4;
                     const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.4;
-                    const umbralColision = radioVisual1 + radioVisual2 + 0.5;
 
-                    if (distancia < umbralColision) {
+                    if (distancia < (radioVisual1 + radioVisual2 + 0.5)) {
                         n1.userData.tamano += n2.userData.tamano;
-
-                        // Escala más moderada para que la nube final no tape toda la cámara
                         const nuevaEscala = Math.cbrt(n1.userData.tamano) * 0.65;
                         n1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
 
@@ -461,7 +458,12 @@
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
                             btnRecalibrar.style.display = 'none';
-                            pantallaVictoria.style.display = 'block';
+
+                            // Transformar la nube final en el HUD 3D
+                            crearLienzoTexto3D(n1);
+
+                            // Adherir la nube a la cámara para que flote siempre en tu pantalla
+                            camera.attach(n1);
                         }
                         return;
                     }
@@ -471,24 +473,6 @@
 
         function actualizarContador() {
             contadorDiv.innerText = "Nubes: " + nubes.length;
-        }
-
-        function actualizarContadorTiempo() {
-            const ahora = new Date();
-            let anioActual = ahora.getFullYear();
-            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
-
-            if (ahora > objetivo) {
-                objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
-            }
-
-            const diferencia = objetivo - ahora;
-            const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
-            const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
-
-            relojDiv.innerText =
-                `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`;
         }
 
         function handleOrientation(event) {
@@ -517,20 +501,23 @@
 
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
-                const tiempo = Date.now() * 0.003;
 
-                nubeFinal.rotation.y += 0.02;
-                nubeFinal.rotation.x = Math.sin(tiempo * 0.5) * 0.3;
+                // Movimiento suave local al centro de la cámara (Efecto paneo y anclaje)
+                nubeFinal.position.lerp(new THREE.Vector3(0, 0, -3.5), 0.04);
 
+                // Rotación suave para darse vuelta y revelar el texto (180 grados)
+                const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
+                nubeFinal.quaternion.slerp(targetRot, 0.04);
+
+                // Efecto de brillo y cambio de colores
                 nubeFinal.traverse((child) => {
-                    // Evitar que el contorno negro cambie de color
-                    if (child.isMesh && child.material.side !== THREE.BackSide) {
+                    if (child.isMesh && child !== textMesh && child.material.side !== THREE.BackSide) {
                         const tonoHue = (Date.now() * 0.05) % 360;
                         child.material.color.setHSL(tonoHue / 360, 0.8, 0.7);
                     }
                 });
 
-                actualizarContadorTiempo();
+                actualizarTexturaNube();
             }
 
             verificarFusion();
