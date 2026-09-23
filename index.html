@@ -158,7 +158,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.14</div>
+    <div id="version-tag">version 1.15</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -171,7 +171,6 @@
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
-    <!-- Librerías de Three.js y GLTFLoader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
@@ -194,8 +193,8 @@
         let juegoTerminado = false;
         let modeloGLTFBase = null;
 
-        // >>> AJUSTA ESTE VALOR SI TU NUBE CARGA MUY GRANDE O MUY CHICA <<<
-        const ESCALA_MODELO_GLTF = 1.0;
+        // >>> AJUSTA ESTE VALOR: Reducido al 20% para modelos muy grandes <<<
+        const ESCALA_MODELO_GLTF = 0.2;
 
         let textCanvas, textTexture, textMesh;
 
@@ -214,12 +213,10 @@
             amarillo: 0xFFFEAE
         };
 
-        // 1. CARGA DEL MODELO GLB
         const loader = new THREE.GLTFLoader();
         loader.load('model/nube.glb', function (gltf) {
             modeloGLTFBase = gltf.scene;
 
-            // Reemplazamos los materiales del modelo por los de Nimbloom
             const materialNube = new THREE.MeshLambertMaterial({
                 color: COLORES.blanco,
                 flatShading: true,
@@ -232,7 +229,6 @@
                 side: THREE.BackSide
             });
 
-            // Extraemos las mallas para aplicarles el color y el contorno negro
             const mallas = [];
             modeloGLTFBase.traverse((child) => {
                 if (child.isMesh) mallas.push(child);
@@ -241,14 +237,11 @@
             mallas.forEach((mesh) => {
                 mesh.material = materialNube;
 
-                // Generar contorno calcado
                 const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
-                // Escalar ligeramente para que asome por detrás
                 contorno.scale.set(1.05, 1.05, 1.05);
                 mesh.add(contorno);
             });
 
-            // Habilitar el botón una vez que el modelo está listo
             btnIniciar.innerText = "CONECTAR";
             btnIniciar.disabled = false;
 
@@ -257,7 +250,6 @@
             infoDiv.innerText = "Error al cargar model/nube.glb. Verifica la ruta.";
         });
 
-        // 2. LÓGICA DE INICIO
         btnIniciar.addEventListener('click', async () => {
             try {
                 const constraints = {
@@ -410,7 +402,6 @@
             });
             textMesh = new THREE.Mesh(planeGeo, planeMat);
 
-            // Puedes ajustar el -0.42 si el texto queda muy hundido o muy despegado de TU modelo 3D
             textMesh.position.set(0, 0, -0.42);
             textMesh.rotation.y = Math.PI;
             nubeFinal.add(textMesh);
@@ -474,8 +465,14 @@
 
                     if (distancia < (radioVisual1 + radioVisual2 + 0.5)) {
                         n1.userData.tamano += n2.userData.tamano;
-                        const nuevaEscala = Math.cbrt(n1.userData.tamano) * 0.65;
-                        n1.scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
+
+                        // Adaptar el crecimiento de escala de acuerdo al modelo original
+                        const baseScale = ESCALA_MODELO_GLTF;
+                        const growthFactor = Math.cbrt(n1.userData.tamano);
+                        const nuevaEscala = baseScale * growthFactor;
+
+                        // Aplicar la escala directamente a la malla del modelo cargado
+                        n1.children[0].scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
 
                         scene.remove(n2);
                         nubes.splice(j, 1);
@@ -527,7 +524,10 @@
                 const nubeFinal = nubes[0];
 
                 nubeFinal.position.lerp(new THREE.Vector3(0, 0, -3.5), 0.04);
-                nubeFinal.scale.lerp(new THREE.Vector3(2.2, 2.2, 2.2), 0.03);
+
+                // Crece al doble de la escala base final de fusion
+                const finalScale = ESCALA_MODELO_GLTF * 4;
+                nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale, finalScale, finalScale), 0.03);
 
                 const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                 nubeFinal.quaternion.slerp(targetRot, 0.04);
