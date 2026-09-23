@@ -135,7 +135,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Recalibrar</button>
-    <div id="version-tag">version 1.11</div>
+    <div id="version-tag">version 1.12</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -167,7 +167,6 @@
         let isCalibrated = false;
         let juegoTerminado = false;
 
-        // Elementos para el texto 3D holográfico
         let textCanvas, textTexture, textMesh;
 
         const targetQuaternion = new THREE.Quaternion();
@@ -224,7 +223,7 @@
         function init3D() {
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            scene.add(camera); // Importante para vincular objetos a la cámara luego
+            scene.add(camera);
 
             const canvas = document.getElementById('canvas-3d');
             renderer = new THREE.WebGLRenderer({
@@ -268,6 +267,7 @@
 
         function crearModeloNubeRealista() {
             const grupo = new THREE.Group();
+            // Manteniendo el estilo y el contorno negro intacto
             const materialNube = new THREE.MeshLambertMaterial({
                 color: 0xffffff,
                 flatShading: true,
@@ -366,14 +366,14 @@
         }
 
         function crearLienzoTexto3D(nubeFinal) {
-            // Creamos un canvas virtual fuera de pantalla para escribir con HTML5 Canvas
             textCanvas = document.createElement('canvas');
             textCanvas.width = 1024;
             textCanvas.height = 1024;
             textTexture = new THREE.CanvasTexture(textCanvas);
             textTexture.minFilter = THREE.LinearFilter;
 
-            const planeGeo = new THREE.PlaneGeometry(3.5, 3.5);
+            // Achicamos el tamaño del plano para que no sobresalga de la nube final
+            const planeGeo = new THREE.PlaneGeometry(1.3, 1.3);
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
                 transparent: true,
@@ -381,8 +381,8 @@
             });
             textMesh = new THREE.Mesh(planeGeo, planeMat);
 
-            // Lo pegamos a la parte TRASERA de la nube y lo damos vuelta
-            textMesh.position.set(0, 0, -1.0);
+            // Lo pegamos bien a la "espalda" de la nube
+            textMesh.position.set(0, 0, -0.42);
             textMesh.rotation.y = Math.PI;
             nubeFinal.add(textMesh);
         }
@@ -405,30 +405,32 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
+            // Textos más comprimidos al centro para que calcen perfecto en la nube
             ctx.shadowColor = 'rgba(255, 204, 0, 0.9)';
             ctx.shadowBlur = 20;
             ctx.fillStyle = '#ffffff';
-            ctx.font = '900 130px sans-serif';
-            ctx.fillText('NIMBLOOM', 512, 250);
+            ctx.font = '900 120px sans-serif';
+            ctx.fillText('NIMBLOOM', 512, 300);
 
             ctx.shadowBlur = 10;
             ctx.fillStyle = '#ffcc00';
             ctx.font = 'bold 90px sans-serif';
             ctx.fillText(
                 `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
-                512, 420);
+                512, 450);
 
             ctx.shadowBlur = 5;
             ctx.fillStyle = '#dddddd';
-            ctx.font = 'bold 60px sans-serif';
-            ctx.fillText('10 DE OCTUBRE', 512, 550);
+            ctx.font = 'bold 55px sans-serif';
+            ctx.fillText('10 DE OCTUBRE', 512, 570);
 
             ctx.shadowBlur = 0;
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.font = 'bold 28px sans-serif';
-            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 750);
-            ctx.font = '24px sans-serif';
-            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 800);
+            ctx.font = 'bold 26px sans-serif';
+            // Textos troll mantenidos tal cual lo pediste
+            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 720);
+            ctx.font = '22px sans-serif';
+            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 770);
 
             textTexture.needsUpdate = true;
         }
@@ -459,10 +461,7 @@
                             contadorDiv.style.display = 'none';
                             btnRecalibrar.style.display = 'none';
 
-                            // Transformar la nube final en el HUD 3D
                             crearLienzoTexto3D(n1);
-
-                            // Adherir la nube a la cámara para que flote siempre en tu pantalla
                             camera.attach(n1);
                         }
                         return;
@@ -502,14 +501,13 @@
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
 
-                // Movimiento suave local al centro de la cámara (Efecto paneo y anclaje)
+                // Acercarla al centro y hacerla MUCHO más grande de forma suave
                 nubeFinal.position.lerp(new THREE.Vector3(0, 0, -3.5), 0.04);
+                nubeFinal.scale.lerp(new THREE.Vector3(2.2, 2.2, 2.2), 0.03);
 
-                // Rotación suave para darse vuelta y revelar el texto (180 grados)
                 const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                 nubeFinal.quaternion.slerp(targetRot, 0.04);
 
-                // Efecto de brillo y cambio de colores
                 nubeFinal.traverse((child) => {
                     if (child.isMesh && child !== textMesh && child.material.side !== THREE.BackSide) {
                         const tonoHue = (Date.now() * 0.05) % 360;
