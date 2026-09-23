@@ -158,7 +158,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.15</div>
+    <div id="version-tag">version 1.16</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -192,11 +192,16 @@
         let isCalibrated = false;
         let juegoTerminado = false;
         let modeloGLTFBase = null;
-
-        // >>> AJUSTA ESTE VALOR: Reducido al 20% para modelos muy grandes <<<
-        const ESCALA_MODELO_GLTF = 0.2;
-
         let textCanvas, textTexture, textMesh;
+
+        // ==========================================
+        // VARIABLES DE AJUSTE (Modifica esto si hace falta)
+        // ==========================================
+        const ESCALA_MODELO_GLTF = 0.2; // Escala base de las nubes pequeñas
+        const TAMAÑO_TEXTO = 4.5; // Si el texto final queda chico, subí esto (ej: 6.0)
+        const ALTURA_TEXTO = 0.6; // Si el texto queda muy abajo en TU modelo, subí esto (ej: 1.5)
+        const PROFUNDIDAD_TEXTO = -0.5; // Para acercar o alejar el texto de la superficie
+        // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
         const currentDeviceQuaternion = new THREE.Quaternion();
@@ -223,7 +228,6 @@
                 transparent: true,
                 opacity: 0.95
             });
-
             const materialContorno = new THREE.MeshBasicMaterial({
                 color: 0x000000,
                 side: THREE.BackSide
@@ -236,7 +240,6 @@
 
             mallas.forEach((mesh) => {
                 mesh.material = materialNube;
-
                 const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
                 contorno.scale.set(1.05, 1.05, 1.05);
                 mesh.add(contorno);
@@ -246,7 +249,6 @@
             btnIniciar.disabled = false;
 
         }, undefined, function (error) {
-            console.error(error);
             infoDiv.innerText = "Error al cargar model/nube.glb. Verifica la ruta.";
         });
 
@@ -394,16 +396,25 @@
             textTexture = new THREE.CanvasTexture(textCanvas);
             textTexture.minFilter = THREE.LinearFilter;
 
-            const planeGeo = new THREE.PlaneGeometry(1.3, 1.3);
+            // Creamos un plano de buen tamaño base
+            const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
+
+            // EL SECRETO "PLASMADO": depthTest en false hace que el texto ignore las montañas del modelo 3D y se dibuje siempre encima como un sticker.
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
                 transparent: true,
-                depthWrite: false
+                depthWrite: false,
+                depthTest: false
             });
-            textMesh = new THREE.Mesh(planeGeo, planeMat);
 
-            textMesh.position.set(0, 0, -0.42);
+            textMesh = new THREE.Mesh(planeGeo, planeMat);
+            textMesh.renderOrder = 999; // Aseguramos que se pinte al final
+
+            textMesh.position.set(0, ALTURA_TEXTO, PROFUNDIDAD_TEXTO);
             textMesh.rotation.y = Math.PI;
+
+            // Empieza muy chiquito para crecer junto con la nube en la animación
+            textMesh.scale.set(0.01, 0.01, 0.01);
             nubeFinal.add(textMesh);
         }
 
@@ -418,6 +429,8 @@
             if (ahora > objetivo) objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
 
             const dif = objetivo - ahora;
+            // Cálculo incluyendo Días
+            const dias = Math.floor(dif / (1000 * 60 * 60 * 24));
             const horas = Math.floor((dif % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutos = Math.floor((dif % (1000 * 60 * 60)) / (1000 * 60));
             const segundos = Math.floor((dif % (1000 * 60)) / 1000);
@@ -429,24 +442,25 @@
             ctx.shadowBlur = 15;
             ctx.fillStyle = '#FFFEAE';
             ctx.font = '400 120px "Cherry Bomb One"';
-            ctx.fillText('NIMBLOOM', 512, 300);
+            ctx.fillText('NIMBLOOM', 512, 250);
 
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
-            ctx.font = '700 90px "Quicksand"';
+            ctx.font = '700 80px "Quicksand"';
+            // Texto del contador actualizado
             ctx.fillText(
-                `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
-                512, 450);
+                `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
+                512, 420);
 
             ctx.fillStyle = '#C2C2F4';
-            ctx.font = '700 55px "Quicksand"';
-            ctx.fillText('10 DE OCTUBRE', 512, 570);
+            ctx.font = '700 50px "Quicksand"';
+            ctx.fillText('10 DE OCTUBRE', 512, 540);
 
             ctx.fillStyle = '#A558CC';
-            ctx.font = '700 26px "Quicksand"';
-            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 720);
-            ctx.font = '600 22px "Quicksand"';
-            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 770);
+            ctx.font = '700 28px "Quicksand"';
+            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 700);
+            ctx.font = '600 24px "Quicksand"';
+            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 750);
 
             textTexture.needsUpdate = true;
         }
@@ -466,12 +480,9 @@
                     if (distancia < (radioVisual1 + radioVisual2 + 0.5)) {
                         n1.userData.tamano += n2.userData.tamano;
 
-                        // Adaptar el crecimiento de escala de acuerdo al modelo original
                         const baseScale = ESCALA_MODELO_GLTF;
                         const growthFactor = Math.cbrt(n1.userData.tamano);
                         const nuevaEscala = baseScale * growthFactor;
-
-                        // Aplicar la escala directamente a la malla del modelo cargado
                         n1.children[0].scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
 
                         scene.remove(n2);
@@ -525,9 +536,16 @@
 
                 nubeFinal.position.lerp(new THREE.Vector3(0, 0, -3.5), 0.04);
 
-                // Crece al doble de la escala base final de fusion
+                // ENSANCHAMIENTO: Crece más en X (1.8x) que en los otros ejes para darle forma de cartel
                 const finalScale = ESCALA_MODELO_GLTF * 4;
-                nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale, finalScale, finalScale), 0.03);
+                nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale * 1.8, finalScale * 1.1, finalScale *
+                    1.1), 0.03);
+
+                // TEXTO PLASMADO: El texto escala al mismo tiempo que la nube
+                if (textMesh) {
+                    const textoScale = finalScale * 3.5; // Ajuste visual de la escala del texto
+                    textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
+                }
 
                 const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                 nubeFinal.quaternion.slerp(targetRot, 0.04);
