@@ -89,6 +89,31 @@
             display: none;
         }
 
+        /* Indicadores de dirección (Radar off-screen) */
+        .flecha-guia {
+            position: absolute;
+            z-index: 15;
+            color: #FFFEAE;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 8px #A558CC;
+            pointer-events: none;
+            display: none;
+            animation: latido 1.2s infinite alternate;
+        }
+
+        @keyframes latido {
+            from {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            to {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
         #ui {
             position: absolute;
             top: 50%;
@@ -158,16 +183,22 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.20</div>
+    <div id="version-tag">version 1.21</div>
     <div id="contador-nubes">Nubes: 8</div>
+
+    <!-- Elementos visuales de guía para orientar al usuario -->
+    <div id="guia-arriba" class="flecha-guia" style="top: 20px; left: 50%; transform: translateX(-50%);">▲</div>
+    <div id="guia-abajo" class="flecha-guia" style="bottom: 60px; left: 50%; transform: translateX(-50%);">▼</div>
+    <div id="guia-izquierda" class="flecha-guia" style="top: 50%; left: 20px; transform: translateY(-50%);">◀</div>
+    <div id="guia-derecha" class="flecha-guia" style="top: 50%; right: 20px; transform: translateY(-50%);">▶</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Tomate un momento para vos. Mirá a tu alrededor, buscá las nubes por toda la habitación y unelas.
-        </div>
+        <div id="info">Tomate un momento para vos. Buscá las nubes al frente y a los lados, seguí las flechas si alguna
+            se escapa.</div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
@@ -180,6 +211,11 @@
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
+
+        const guiaArriba = document.getElementById('guia-arriba');
+        const guiaAbajo = document.getElementById('guia-abajo');
+        const guiaIzquierda = document.getElementById('guia-izquierda');
+        const guiaDerecha = document.getElementById('guia-derecha');
 
         let scene, camera, renderer;
         let nubes = [];
@@ -317,18 +353,19 @@
                 scene.add(directionalLight);
             }
 
-            const posicionesAlrededor = [
-                new THREE.Vector3(0, 0.5, -3.0), // 1. Frente
-                new THREE.Vector3(2.5, 0.2, -2.0), // 2. Derecha cerca
-                new THREE.Vector3(-2.5, 0.2, -2.0), // 3. Izquierda cerca
-                new THREE.Vector3(3.0, 1.0, 1.0), // 4. A la derecha y atrás
-                new THREE.Vector3(-3.0, 1.0, 1.0), // 5. A la izquierda y atrás
-                new THREE.Vector3(0, 2.5, -1.5), // 6. Arriba
-                new THREE.Vector3(0, -1.5, -2.5), // 7. Abajo
-                new THREE.Vector3(0, 0.5, 3.0) // 8. A tus espaldas
+            // DISTRIBUCIÓN CÓMODA: Arco frontal y lateral de 180° (Sin nubes a las espaldas para evitar mareos)
+            const posicionesComodas = [
+                new THREE.Vector3(0, 0.2, -2.8), // 1. Centro frente
+                new THREE.Vector3(1.8, 0.4, -2.2), // 2. Derecha media
+                new THREE.Vector3(-1.8, 0.4, -2.2), // 3. Izquierda media
+                new THREE.Vector3(2.5, 1.2, -1.8), // 4. Derecha arriba
+                new THREE.Vector3(-2.5, 1.2, -1.8), // 5. Izquierda arriba
+                new THREE.Vector3(0.8, -0.8, -2.5), // 6. Abajo derecha
+                new THREE.Vector3(-0.8, -0.8, -2.5), // 7. Abajo izquierda
+                new THREE.Vector3(0, 1.6, -2.2) // 8. Arriba centro
             ];
 
-            posicionesAlrededor.forEach((pos, index) => {
+            posicionesComodas.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
                 const nubeVisual = modeloGLTFBase.clone();
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
@@ -368,8 +405,6 @@
                     obj = obj.parent;
                 }
                 nubeArrastrada = obj;
-
-                // Fijamos la distancia exacta a la cámara al momento de tocarla para que nunca cambie de tamaño
                 nubeArrastrada.userData.distanciaFija = nubeArrastrada.position.distanceTo(camera.position);
             }
         }
@@ -380,8 +415,6 @@
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
             raycaster.setFromCamera(mouse, camera);
-
-            // Proyectamos el movimiento manteniendo estrictamente la distancia fija a la cámara
             const dirRayo = raycaster.ray.direction.clone();
             nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData
                 .distanciaFija));
@@ -462,6 +495,47 @@
             textTexture.needsUpdate = true;
         }
 
+        // Sistema de radar: Detecta si las nubes están fuera de la pantalla y activa flechas guía
+        function actualizarGuiasVisuales() {
+            if (juegoTerminado || nubes.length === 0) {
+                guiaArriba.style.display = 'none';
+                guiaAbajo.style.display = 'none';
+                guiaIzquierda.style.display = 'none';
+                guiaDerecha.style.display = 'none';
+                return;
+            }
+
+            let mostrarArriba = false;
+            let mostrarAbajo = false;
+            let mostrarIzquierda = false;
+            let mostrarDerecha = false;
+
+            const vectorTemp = new THREE.Vector3();
+
+            nubes.forEach(nube => {
+                vectorTemp.copy(nube.position);
+                // Proyectar la posición de la nube a coordenadas de pantalla NDC (-1 a 1)
+                vectorTemp.project(camera);
+
+                // Si Z > 1, la nube está detrás de la cámara
+                if (vectorTemp.z > 1) {
+                    if (vectorTemp.x < 0) mostrarDerecha = true;
+                    else mostrarIzquierda = true;
+                    return;
+                }
+
+                if (vectorTemp.y > 0.9) mostrarArriba = true;
+                if (vectorTemp.y < -0.9) mostrarAbajo = true;
+                if (vectorTemp.x < -0.9) mostrarIzquierda = true;
+                if (vectorTemp.x > 0.9) mostrarDerecha = true;
+            });
+
+            guiaArriba.style.display = mostrarArriba ? 'block' : 'none';
+            guiaAbajo.style.display = mostrarAbajo ? 'block' : 'none';
+            guiaIzquierda.style.display = mostrarIzquierda ? 'block' : 'none';
+            guiaDerecha.style.display = mostrarDerecha ? 'block' : 'none';
+        }
+
         function verificarFusion() {
             if (juegoTerminado) return;
 
@@ -491,6 +565,10 @@
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
                             btnRecalibrar.style.display = 'none';
+                            guiaArriba.style.display = 'none';
+                            guiaAbajo.style.display = 'none';
+                            guiaIzquierda.style.display = 'none';
+                            guiaDerecha.style.display = 'none';
 
                             crearLienzoTexto3D(n1);
                             camera.attach(n1);
@@ -557,6 +635,8 @@
                 });
 
                 actualizarTexturaNube();
+            } else {
+                actualizarGuiasVisuales();
             }
 
             verificarFusion();
