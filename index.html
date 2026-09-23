@@ -89,7 +89,6 @@
             display: none;
         }
 
-        /* Indicadores de dirección (Radar off-screen) */
         .flecha-guia {
             position: absolute;
             z-index: 15;
@@ -183,10 +182,9 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.21</div>
+    <div id="version-tag">version 1.22</div>
     <div id="contador-nubes">Nubes: 8</div>
 
-    <!-- Elementos visuales de guía para orientar al usuario -->
     <div id="guia-arriba" class="flecha-guia" style="top: 20px; left: 50%; transform: translateX(-50%);">▲</div>
     <div id="guia-abajo" class="flecha-guia" style="bottom: 60px; left: 50%; transform: translateX(-50%);">▼</div>
     <div id="guia-izquierda" class="flecha-guia" style="top: 50%; left: 20px; transform: translateY(-50%);">◀</div>
@@ -197,8 +195,8 @@
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Tomate un momento para vos. Buscá las nubes al frente y a los lados, seguí las flechas si alguna
-            se escapa.</div>
+        <div id="info">Tomate un momento para vos. Buscá las nubes bien distribuidas por el espacio y unelas con calma.
+        </div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
@@ -353,19 +351,19 @@
                 scene.add(directionalLight);
             }
 
-            // DISTRIBUCIÓN CÓMODA: Arco frontal y lateral de 180° (Sin nubes a las espaldas para evitar mareos)
-            const posicionesComodas = [
-                new THREE.Vector3(0, 0.2, -2.8), // 1. Centro frente
-                new THREE.Vector3(1.8, 0.4, -2.2), // 2. Derecha media
-                new THREE.Vector3(-1.8, 0.4, -2.2), // 3. Izquierda media
-                new THREE.Vector3(2.5, 1.2, -1.8), // 4. Derecha arriba
-                new THREE.Vector3(-2.5, 1.2, -1.8), // 5. Izquierda arriba
-                new THREE.Vector3(0.8, -0.8, -2.5), // 6. Abajo derecha
-                new THREE.Vector3(-0.8, -0.8, -2.5), // 7. Abajo izquierda
-                new THREE.Vector3(0, 1.6, -2.2) // 8. Arriba centro
+            // POSICIONES AMPLIAMENTE SEPARADAS: Mayor distancia entre sí y en profundidad para evitar auto-fusión
+            const posicionesAmplias = [
+                new THREE.Vector3(0, 0.8, -4.0), // 1. Centro superior profundo
+                new THREE.Vector3(3.2, 0.2, -3.0), // 2. Derecha lejana
+                new THREE.Vector3(-3.2, 0.2, -3.0), // 3. Izquierda lejana
+                new THREE.Vector3(2.5, 2.0, -2.5), // 4. Arriba derecha
+                new THREE.Vector3(-2.5, 2.0, -2.5), // 5. Arriba izquierda
+                new THREE.Vector3(1.5, -1.5, -3.5), // 6. Abajo derecha
+                new THREE.Vector3(-1.5, -1.5, -3.5), // 7. Abajo izquierda
+                new THREE.Vector3(0, -1.8, -2.0) // 8. Abajo cerca centro
             ];
 
-            posicionesComodas.forEach((pos, index) => {
+            posicionesAmplias.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
                 const nubeVisual = modeloGLTFBase.clone();
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
@@ -495,7 +493,6 @@
             textTexture.needsUpdate = true;
         }
 
-        // Sistema de radar: Detecta si las nubes están fuera de la pantalla y activa flechas guía
         function actualizarGuiasVisuales() {
             if (juegoTerminado || nubes.length === 0) {
                 guiaArriba.style.display = 'none';
@@ -514,10 +511,8 @@
 
             nubes.forEach(nube => {
                 vectorTemp.copy(nube.position);
-                // Proyectar la posición de la nube a coordenadas de pantalla NDC (-1 a 1)
                 vectorTemp.project(camera);
 
-                // Si Z > 1, la nube está detrás de la cámara
                 if (vectorTemp.z > 1) {
                     if (vectorTemp.x < 0) mostrarDerecha = true;
                     else mostrarIzquierda = true;
