@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Nimbloom</title>
+
+    <!-- Integración de las tipografías del manual de marca -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&family=Quicksand:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
     <style>
         body,
         html {
@@ -14,7 +21,8 @@
             height: 100%;
             overflow: hidden;
             background-color: black;
-            font-family: sans-serif;
+            font-family: 'Quicksand', sans-serif;
+            /* Tipografía para textos y UI */
             touch-action: none;
         }
 
@@ -42,8 +50,10 @@
             top: 15px;
             right: 15px;
             z-index: 20;
-            color: rgba(255, 255, 255, 0.7);
-            background: rgba(0, 0, 0, 0.5);
+            color: #FDF7FF;
+            /* Blanco luminosidad */
+            background: rgba(165, 88, 204, 0.5);
+            /* Violeta con transparencia */
             padding: 5px 10px;
             border-radius: 8px;
             font-size: 12px;
@@ -56,12 +66,15 @@
             top: 15px;
             left: 15px;
             z-index: 20;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(194, 194, 244, 0.8);
+            /* Lavanda */
+            color: #A558CC;
+            /* Violeta */
+            border: 2px solid #FDF7FF;
             padding: 8px 15px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: bold;
             cursor: pointer;
             display: none;
             pointer-events: auto;
@@ -72,12 +85,14 @@
             bottom: 15px;
             right: 15px;
             z-index: 20;
-            color: rgba(255, 255, 255, 0.6);
-            background: rgba(0, 0, 0, 0.4);
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: bold;
+            color: #A558CC;
+            /* Violeta */
+            background: rgba(253, 247, 255, 0.8);
+            /* Blanco transparente */
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
             pointer-events: none;
             display: none;
         }
@@ -95,47 +110,62 @@
         }
 
         h1.titulo-juego {
-            color: #ffffff;
-            font-size: 42px;
-            font-weight: 900;
+            color: #FDF7FF;
+            /* Blanco nube */
+            font-family: 'Cherry Bomb One', cursive;
+            /* Tipografía para títulos */
+            font-size: 50px;
+            font-weight: 400;
             letter-spacing: 2px;
             margin-bottom: 10px;
-            text-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
-            -webkit-text-stroke: 1px black;
+            text-shadow: 0 4px 15px rgba(217, 170, 241, 0.8);
+            /* Sombra Lila */
+            -webkit-text-stroke: 1px #A558CC;
         }
 
         .btn-principal {
-            background-color: #ffcc00;
-            border: 2px solid black;
-            color: #000;
+            background-color: #A558CC;
+            /* Violeta boton primario */
+            border: 2px solid #FDF7FF;
+            color: #FDF7FF;
+            /* Blanco para textos sobre fondos claros/oscuros */
             padding: 15px 30px;
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 700;
             border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             cursor: pointer;
             width: 100%;
             pointer-events: auto;
+            font-family: 'Quicksand', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .btn-principal:active {
+            background-color: #FFFEAE;
+            /* Amarillo al presionar (Acento) */
+            color: #A558CC;
         }
 
         #info {
-            color: #ddd;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid black;
-            padding: 12px 18px;
+            color: #A558CC;
+            background: rgba(253, 247, 255, 0.9);
+            border: 1px solid #C2C2F4;
+            padding: 15px 20px;
             border-radius: 12px;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 25px;
             pointer-events: auto;
-            line-height: 1.4;
+            line-height: 1.5;
         }
     </style>
 </head>
 
 <body>
 
-    <button id="btn-recalibrar">⟲ Recalibrar</button>
-    <div id="version-tag">version 1.12</div>
+    <button id="btn-recalibrar">⟲ Centrar espacio</button>
+    <div id="version-tag">version 1.13</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -143,8 +173,10 @@
 
     <div id="ui">
         <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Apunta al frente y toca Iniciar. Arrastra las nubes para unirlas todas en una sola.</div>
-        <button id="btn-iniciar" class="btn-principal">INICIAR EXPERIENCIA</button>
+        <!-- Tono de voz sereno y cercano -->
+        <div id="info">Tomate un momento para vos. Respirá a tu ritmo, arrastrá las nubes para abrazarlas y descubrí el
+            florecimiento.</div>
+        <button id="btn-iniciar" class="btn-principal">CONECTAR</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -176,6 +208,15 @@
         const europaQuaternion = new THREE.Euler();
         const correctionQuaternion = new THREE.Quaternion();
 
+        // Colores del Manual de Marca Nimbloom
+        const COLORES = {
+            violeta: 0xA558CC,
+            lavanda: 0xC2C2F4,
+            lila: 0xD9AAF1,
+            blanco: 0xFDF7FF,
+            amarillo: 0xFFFEAE
+        };
+
         btnIniciar.addEventListener('click', async () => {
             try {
                 const constraints = {
@@ -198,21 +239,21 @@
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
                     .requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState !== 'granted') {
-                        infoDiv.innerText = "Permiso de sensores denegado.";
-                        return;
-                    }
+                    if (permissionState !== 'granted') return;
                 }
 
                 document.getElementById('ui').style.display = 'none';
                 contadorDiv.style.display = 'block';
                 btnRecalibrar.style.display = 'block';
-                init3D();
-                window.addEventListener('deviceorientation', handleOrientation, true);
+
+                // Forzar carga de fuentes en el canvas asegurándolas en el DOM oculto
+                document.fonts.ready.then(() => {
+                    init3D();
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                });
 
             } catch (error) {
-                alert("Error: Asegúrate de usar HTTPS o permisos de cámara.");
-                infoDiv.innerText = "Error al iniciar: " + error;
+                alert("Error de cámara.");
             }
         });
 
@@ -267,13 +308,15 @@
 
         function crearModeloNubeRealista() {
             const grupo = new THREE.Group();
-            // Manteniendo el estilo y el contorno negro intacto
+
+            // Las nubes inician con el Blanco de luminosidad
             const materialNube = new THREE.MeshLambertMaterial({
-                color: 0xffffff,
+                color: COLORES.blanco,
                 flatShading: true,
                 transparent: true,
                 opacity: 0.95
             });
+            // El contorno negro se mantiene
             const materialContorno = new THREE.MeshBasicMaterial({
                 color: 0x000000,
                 side: THREE.BackSide
@@ -284,7 +327,7 @@
                 ambientLight.name = 'luzAmbiental';
                 scene.add(ambientLight);
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.6);
                 directionalLight.position.set(5, 12, 8);
                 scene.add(directionalLight);
             }
@@ -372,7 +415,6 @@
             textTexture = new THREE.CanvasTexture(textCanvas);
             textTexture.minFilter = THREE.LinearFilter;
 
-            // Achicamos el tamaño del plano para que no sobresalga de la nube final
             const planeGeo = new THREE.PlaneGeometry(1.3, 1.3);
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
@@ -381,7 +423,6 @@
             });
             textMesh = new THREE.Mesh(planeGeo, planeMat);
 
-            // Lo pegamos bien a la "espalda" de la nube
             textMesh.position.set(0, 0, -0.42);
             textMesh.rotation.y = Math.PI;
             nubeFinal.add(textMesh);
@@ -405,31 +446,30 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Textos más comprimidos al centro para que calcen perfecto en la nube
-            ctx.shadowColor = 'rgba(255, 204, 0, 0.9)';
-            ctx.shadowBlur = 20;
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '900 120px sans-serif';
+            // Título en tipografía Cherry Bomb One y color Amarillo
+            ctx.shadowColor = 'rgba(165, 88, 204, 0.9)'; // Sombra Violeta
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = '#FFFEAE'; // Amarillo
+            ctx.font = '400 120px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 300);
 
-            ctx.shadowBlur = 10;
-            ctx.fillStyle = '#ffcc00';
-            ctx.font = 'bold 90px sans-serif';
+            // Reloj en tipografía Quicksand y color Violeta sobre nube blanca
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#A558CC'; // Violeta
+            ctx.font = '700 90px "Quicksand"';
             ctx.fillText(
                 `${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 450);
 
-            ctx.shadowBlur = 5;
-            ctx.fillStyle = '#dddddd';
-            ctx.font = 'bold 55px sans-serif';
+            ctx.fillStyle = '#C2C2F4'; // Lavanda oscuro para contraste sutil
+            ctx.font = '700 55px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 570);
 
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.font = 'bold 26px sans-serif';
-            // Textos troll mantenidos tal cual lo pediste
+            // Textos solicitados
+            ctx.fillStyle = '#A558CC';
+            ctx.font = '700 26px "Quicksand"';
             ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 720);
-            ctx.font = '22px sans-serif';
+            ctx.font = '600 22px "Quicksand"';
             ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 770);
 
             textTexture.needsUpdate = true;
@@ -456,6 +496,7 @@
                         nubes.splice(j, 1);
                         actualizarContador();
 
+                        // Ocurre el evento Nimbloom (el abrazo completado)
                         if (nubes.length === 1) {
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
@@ -501,17 +542,21 @@
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
 
-                // Acercarla al centro y hacerla MUCHO más grande de forma suave
                 nubeFinal.position.lerp(new THREE.Vector3(0, 0, -3.5), 0.04);
                 nubeFinal.scale.lerp(new THREE.Vector3(2.2, 2.2, 2.2), 0.03);
 
                 const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                 nubeFinal.quaternion.slerp(targetRot, 0.04);
 
+                // Representación del "cambio lumínico" usando la paleta oficial
                 nubeFinal.traverse((child) => {
                     if (child.isMesh && child !== textMesh && child.material.side !== THREE.BackSide) {
-                        const tonoHue = (Date.now() * 0.05) % 360;
-                        child.material.color.setHSL(tonoHue / 360, 0.8, 0.7);
+                        const tiempo = Date.now() * 0.001;
+                        // Interpola suavemente entre los colores Lavanda (#C2C2F4) y Lila (#D9AAF1)
+                        const r = 194 + Math.sin(tiempo) * 23;
+                        const g = 194 - Math.sin(tiempo) * 24;
+                        const b = 244 + Math.sin(tiempo) * -3;
+                        child.material.color.setRGB(r / 255, g / 255, b / 255);
                     }
                 });
 
