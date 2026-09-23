@@ -158,7 +158,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar espacio</button>
-    <div id="version-tag">version 1.16</div>
+    <div id="version-tag">version 1.17</div>
     <div id="contador-nubes">Nubes: 8</div>
 
     <video id="camara-video" autoplay playsinline muted></video>
@@ -195,12 +195,17 @@
         let textCanvas, textTexture, textMesh;
 
         // ==========================================
-        // VARIABLES DE AJUSTE (Modifica esto si hace falta)
+        // VARIABLES DE AJUSTE
         // ==========================================
-        const ESCALA_MODELO_GLTF = 0.2; // Escala base de las nubes pequeñas
-        const TAMAÑO_TEXTO = 4.5; // Si el texto final queda chico, subí esto (ej: 6.0)
-        const ALTURA_TEXTO = 0.6; // Si el texto queda muy abajo en TU modelo, subí esto (ej: 1.5)
-        const PROFUNDIDAD_TEXTO = -0.5; // Para acercar o alejar el texto de la superficie
+        const ESCALA_MODELO_GLTF = 0.2;
+        const TAMAÑO_TEXTO = 0.9;
+        const ALTURA_TEXTO = 1.0;
+        const PROFUNDIDAD_TEXTO = -0.5;
+
+        // >>> NUEVA VARIABLE PARA BAJAR EL MODELO AL FINAL <<<
+        // Un valor de 0 es el centro exacto. Valores negativos lo bajan en la pantalla.
+        // Si -0.8 es mucho, probá con -0.5. Si querés que baje más, probá con -1.2
+        const ALTURA_MODELO_FINAL = -0.8;
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -396,10 +401,8 @@
             textTexture = new THREE.CanvasTexture(textCanvas);
             textTexture.minFilter = THREE.LinearFilter;
 
-            // Creamos un plano de buen tamaño base
             const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
 
-            // EL SECRETO "PLASMADO": depthTest en false hace que el texto ignore las montañas del modelo 3D y se dibuje siempre encima como un sticker.
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
                 transparent: true,
@@ -408,12 +411,11 @@
             });
 
             textMesh = new THREE.Mesh(planeGeo, planeMat);
-            textMesh.renderOrder = 999; // Aseguramos que se pinte al final
+            textMesh.renderOrder = 999;
 
             textMesh.position.set(0, ALTURA_TEXTO, PROFUNDIDAD_TEXTO);
             textMesh.rotation.y = Math.PI;
 
-            // Empieza muy chiquito para crecer junto con la nube en la animación
             textMesh.scale.set(0.01, 0.01, 0.01);
             nubeFinal.add(textMesh);
         }
@@ -429,7 +431,6 @@
             if (ahora > objetivo) objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
 
             const dif = objetivo - ahora;
-            // Cálculo incluyendo Días
             const dias = Math.floor(dif / (1000 * 60 * 60 * 24));
             const horas = Math.floor((dif % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutos = Math.floor((dif % (1000 * 60 * 60)) / (1000 * 60));
@@ -447,7 +448,6 @@
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
             ctx.font = '700 80px "Quicksand"';
-            // Texto del contador actualizado
             ctx.fillText(
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 420);
@@ -534,16 +534,15 @@
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
 
-                nubeFinal.position.lerp(new THREE.Vector3(0, 0, -3.5), 0.04);
+                // === ACÁ SE APLICA LA ALTURA DE LA NUBE FINAL ===
+                nubeFinal.position.lerp(new THREE.Vector3(0, ALTURA_MODELO_FINAL, -3.5), 0.04);
 
-                // ENSANCHAMIENTO: Crece más en X (1.8x) que en los otros ejes para darle forma de cartel
                 const finalScale = ESCALA_MODELO_GLTF * 4;
                 nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale * 1.8, finalScale * 1.1, finalScale *
                     1.1), 0.03);
 
-                // TEXTO PLASMADO: El texto escala al mismo tiempo que la nube
                 if (textMesh) {
-                    const textoScale = finalScale * 3.5; // Ajuste visual de la escala del texto
+                    const textoScale = finalScale * 3.5;
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
