@@ -20,6 +20,11 @@
             height: 100%;
             overflow: hidden;
             background-color: black;
+            /* Fondo personalizado desde la carpeta img */
+            background-image: url('img/fondo.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             font-family: 'Quicksand', sans-serif;
             touch-action: none;
         }
@@ -126,17 +131,6 @@
             pointer-events: none;
         }
 
-        h1.titulo-juego {
-            color: #FDF7FF;
-            font-family: 'Cherry Bomb One', cursive;
-            font-size: 50px;
-            font-weight: 400;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            text-shadow: 0 4px 15px rgba(217, 170, 241, 0.8);
-            -webkit-text-stroke: 1px #A558CC;
-        }
-
         .btn-principal {
             background-color: #A558CC;
             border: 2px solid #FDF7FF;
@@ -183,7 +177,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.28</div>
+    <div id="version-tag">version 1.29</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -196,8 +190,9 @@
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
-        <h1 class="titulo-juego">Nimbloom</h1>
-        <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si alguna se oculta.</div>
+        <!-- Se removió el título de Nimbloom de esta pantalla de conectar -->
+        <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si
+            alguna se oculta.</div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
     </div>
 
@@ -354,10 +349,10 @@
 
             // EXACTAMENTE 4 NUBES DISTRIBUIDAS EN EL ESPACIO 360°
             const posiciones4Nubes = [
-                new THREE.Vector3(0, 0.5, -3.0),    // 1. Al frente
-                new THREE.Vector3(3.0, 0.2, -2.0),  // 2. A la derecha
+                new THREE.Vector3(0, 0.5, -3.0), // 1. Al frente
+                new THREE.Vector3(3.0, 0.2, -2.0), // 2. A la derecha
                 new THREE.Vector3(-3.0, 0.2, -2.0), // 3. A la izquierda
-                new THREE.Vector3(0, 2.2, 1.5)      // 4. Arriba y hacia atrás
+                new THREE.Vector3(0, 2.2, 1.5) // 4. Arriba y hacia atrás
             ];
 
             posiciones4Nubes.forEach((pos, index) => {
@@ -433,7 +428,7 @@
                 transparent: true,
                 depthWrite: false,
                 depthTest: false,
-                side: THREE.DoubleSide 
+                side: THREE.DoubleSide
             });
 
             textMesh = new THREE.Mesh(planeGeo, planeMat);
@@ -451,7 +446,7 @@
             const ctx = textCanvas.getContext('2d');
             ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
 
-            // CORRECCIÓN EFECTO ESPEJO: Invertimos el lienzo horizontalmente
+            // Inversión horizontal para corregir efecto espejo
             ctx.save();
             ctx.scale(-1, 1);
             ctx.translate(-textCanvas.width, 0);
@@ -475,20 +470,20 @@
             ctx.shadowBlur = 15;
             ctx.fillStyle = '#FFFEAE';
             ctx.font = '400 130px "Cherry Bomb One"';
-            ctx.fillText('NIMBLOOM', 512, 360);
+            ctx.fillText('NIMBLOOM', 512, 380);
 
             // Contador de días, horas, minutos y segundos
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
-            ctx.font = '700 90px "Quicksand"';
+            ctx.font = '700 95px "Quicksand"';
             ctx.fillText(
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
-                512, 540);
+                512, 560);
 
             // Fecha 10 de Octubre
             ctx.fillStyle = '#C2C2F4';
-            ctx.font = '700 65px "Quicksand"';
-            ctx.fillText('10 DE OCTUBRE', 512, 670);
+            ctx.font = '700 70px "Quicksand"';
+            ctx.fillText('10 DE OCTUBRE', 512, 700);
 
             ctx.restore();
             textTexture.needsUpdate = true;
