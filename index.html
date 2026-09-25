@@ -183,7 +183,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.26</div>
+    <div id="version-tag">version 1.27</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -428,11 +428,13 @@
 
             const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
 
+            // CORRECCIÓN: side: THREE.DoubleSide para que el texto se vea independientemente de la rotación
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
                 transparent: true,
                 depthWrite: false,
-                depthTest: false
+                depthTest: false,
+                side: THREE.DoubleSide 
             });
 
             textMesh = new THREE.Mesh(planeGeo, planeMat);
