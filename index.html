@@ -20,9 +20,9 @@
             height: 100%;
             overflow: hidden;
             background-color: black;
-            /* Fondo personalizado desde la carpeta img */
+            /* Fondo.png abarcando toda la pantalla sin recortes forzados */
             background-image: url('img/fondo.png');
-            background-size: cover;
+            background-size: 100% 100%;
             background-position: center;
             background-repeat: no-repeat;
             font-family: 'Quicksand', sans-serif;
@@ -177,7 +177,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.29</div>
+    <div id="version-tag">version 1.30</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -190,7 +190,6 @@
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
-        <!-- Se removió el título de Nimbloom de esta pantalla de conectar -->
         <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si
             alguna se oculta.</div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
