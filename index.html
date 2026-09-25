@@ -183,7 +183,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.27</div>
+    <div id="version-tag">version 1.28</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -428,7 +428,6 @@
 
             const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
 
-            // CORRECCIÓN: side: THREE.DoubleSide para que el texto se vea independientemente de la rotación
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
                 transparent: true,
@@ -452,6 +451,11 @@
             const ctx = textCanvas.getContext('2d');
             ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
 
+            // CORRECCIÓN EFECTO ESPEJO: Invertimos el lienzo horizontalmente
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.translate(-textCanvas.width, 0);
+
             const ahora = new Date();
             let anioActual = ahora.getFullYear();
             let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
@@ -466,29 +470,27 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
+            // Título NIMBLOOM
             ctx.shadowColor = 'rgba(165, 88, 204, 0.9)';
             ctx.shadowBlur = 15;
             ctx.fillStyle = '#FFFEAE';
-            ctx.font = '400 120px "Cherry Bomb One"';
-            ctx.fillText('NIMBLOOM', 512, 250);
+            ctx.font = '400 130px "Cherry Bomb One"';
+            ctx.fillText('NIMBLOOM', 512, 360);
 
+            // Contador de días, horas, minutos y segundos
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
-            ctx.font = '700 80px "Quicksand"';
+            ctx.font = '700 90px "Quicksand"';
             ctx.fillText(
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
-                512, 420);
+                512, 540);
 
+            // Fecha 10 de Octubre
             ctx.fillStyle = '#C2C2F4';
-            ctx.font = '700 50px "Quicksand"';
-            ctx.fillText('10 DE OCTUBRE', 512, 540);
+            ctx.font = '700 65px "Quicksand"';
+            ctx.fillText('10 DE OCTUBRE', 512, 670);
 
-            ctx.fillStyle = '#A558CC';
-            ctx.font = '700 28px "Quicksand"';
-            ctx.fillText('HECHO EN PALESTINA. FELICES 21, MARTÍN.', 512, 700);
-            ctx.font = '600 24px "Quicksand"';
-            ctx.fillText('(OJALÁ TE SIRVA PARA APROBAR DISEÑO MULTIMEDIAL)', 512, 750);
-
+            ctx.restore();
             textTexture.needsUpdate = true;
         }
 
