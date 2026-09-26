@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.32</div>
+    <div id="version-tag">version 1.33</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -251,7 +251,6 @@
         const loader = new THREE.GLTFLoader();
         const archivosModelos = ['model/nubejonas.glb', 'model/nubejonas2.glb'];
 
-        // Cargar ambos modelos GLB sin bordes negros
         archivosModelos.forEach((ruta, index) => {
             loader.load(ruta, function (gltf) {
                 const modeloBase = gltf.scene;
@@ -541,7 +540,6 @@
                     const distancia = n1.position.distanceTo(n2.position);
                     const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.4;
                     const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.4;
-                    // Umbral de fusión reducido para requerir mayor cercanía física
                     const umbralFusion = (radioVisual1 + radioVisual2) * 1.1;
 
                     if (distancia < umbralFusion) {
@@ -565,8 +563,19 @@
                             guiaIzquierda.style.display = 'none';
                             guiaDerecha.style.display = 'none';
 
-                            crearLienzoTexto3D(n1);
-                            camera.attach(n1);
+                            // FORZAR MODELO FIJO: Al quedar 1 sola, se convierte siempre en el primer modelo (nubejonas.glb)
+                            const nubeFinal = nubes[0];
+                            const modeloFijoBase = modelosBase[0].clone();
+
+                            // Remover visual viejo y asignar el modelo fijo limpio
+                            nubeFinal.remove(nubeFinal.children[0]);
+                            nubeFinal.add(modeloFijoBase);
+
+                            const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 1.8;
+                            modeloFijoBase.scale.set(finalScale, finalScale, finalScale);
+
+                            crearLienzoTexto3D(nubeFinal);
+                            camera.attach(nubeFinal);
                         }
                         return;
                     }
@@ -607,11 +616,8 @@
 
                 nubeFinal.position.lerp(new THREE.Vector3(0, ALTURA_MODELO_FINAL, -3.5), 0.04);
 
-                const finalScale = ESCALA_MODELO_GLTF * 4;
-                nubeFinal.children[0].scale.lerp(new THREE.Vector3(finalScale * 1.8, finalScale * 1.1, finalScale *
-                    1.1), 0.03);
-
                 if (textMesh) {
+                    const finalScale = ESCALA_MODELO_GLTF * 4;
                     const textoScale = finalScale * 3.5;
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
