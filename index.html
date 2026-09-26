@@ -231,6 +231,9 @@
         let isCalibrated = false;
         let juegoTerminado = false;
 
+        // Control de tiempo para el imán de las últimas 2 nubes
+        let tiempoDosNubes = null;
+
         let modelosBase = [];
         let modelosCargadosCount = 0;
 
@@ -244,7 +247,7 @@
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        const POSICION_MODELO_FINAL = new THREE.Vector3(2, 0.4, -3.5);
+        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, 0.4, -3.5);
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -477,7 +480,7 @@
             ctx.font = '400 130px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 380);
 
-            // Contador de días, horas, minutos y segundos (sin resplandor, color violeta original)
+            // Contador de días, horas, minutos y segundos
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
             ctx.font = '700 95px "Quicksand"';
@@ -485,7 +488,7 @@
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 560);
 
-            // Fecha 10 de Octubre (color original)
+            // Fecha 10 de Octubre
             ctx.fillStyle = '#C2C2F4';
             ctx.font = '700 70px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 700);
@@ -535,8 +538,16 @@
         function verificarFusion() {
             if (juegoTerminado) return;
 
-            if (nubes.length === 2 && nubeArrastrada === null) {
-                nubes[1].position.lerp(nubes[0].position, 0.004);
+            // Lógica de 2 nubes con retraso de 5 segundos e imán ultra lento
+            if (nubes.length === 2) {
+                if (!tiempoDosNubes) {
+                    tiempoDosNubes = Date.now(); // Marca el momento exacto en que quedan 2 nubes
+                } else if (nubeArrastrada === null && (Date.now() - tiempoDosNubes >= 5000)) {
+                    // Pasados 5 segundos, la nube [1] se acerca súper lento hacia la nube [0]
+                    nubes[1].position.lerp(nubes[0].position, 0.0015);
+                }
+            } else {
+                tiempoDosNubes = null; // Resetea si hay más o menos de 2 nubes
             }
 
             for (let i = 0; i < nubes.length; i++) {
@@ -563,7 +574,7 @@
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
                             btnRecalibrar.style.display = 'none';
-                            btnReiniciar.style.display = 'block'; // Mostrar botón de reinicio
+                            btnReiniciar.style.display = 'block';
                             guiaArriba.style.display = 'none';
                             guiaAbajo.style.display = 'none';
                             guiaIzquierda.style.display = 'none';
