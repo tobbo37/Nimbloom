@@ -228,14 +228,13 @@
         // VARIABLES DE AJUSTE
         // ==========================================
         const ESCALA_MODELO_GLTF = 0.2;
-        const TAMAÑO_TEXTO = 0.9;
+        const TAMAÑO_TEXTO = 1.2;
 
-        // Posición general de la nube final en pantalla
+        // Posición independiente para el texto (anclado directamente a la cámara para centrado perfecto en pantalla)
+        const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
+
+        // Posición final de la nube (puedes mover el primer valor X para desplazarla a la derecha)
         const POSICION_MODELO_FINAL = new THREE.Vector3(0.6, -0.2, -3.5);
-
-        // Desplazamiento independiente del texto respecto a la nube para centrarlo exactamente en pantalla
-        const OFFSET_TEXTO_X = 0.0;
-        const OFFSET_TEXTO_Y = 0.0; // Ponele más o menos valor si querés subirlo/bajarlo milimétricamente
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -413,7 +412,7 @@
             nubeArrastrada = null;
         }
 
-        function crearLienzoTexto3D(nubeFinal) {
+        function crearLienzoTextoIndependiente() {
             textCanvas = document.createElement('canvas');
             textCanvas.width = 1024;
             textCanvas.height = 1024;
@@ -433,11 +432,9 @@
             textMesh = new THREE.Mesh(planeGeo, planeMat);
             textMesh.renderOrder = 999;
 
-            // Ahora el texto se anexa directamente a la cámara (independiente del centro desfasado del modelo 3D)
-            // para que quede perfectamente centrado en pantalla superpuesto sobre la nube.
-            textMesh.position.set(POSICION_MODELO_FINAL.x + OFFSET_TEXTO_X, POSICION_MODELO_FINAL.y + OFFSET_TEXTO_Y,
-                POSICION_MODELO_FINAL.z + 0.1);
-
+            // Adjuntamos el texto directamente a la CÁMARA para que quede 100% centrado en la pantalla
+            textMesh.position.copy(OFFSET_TEXTO);
+            textMesh.scale.set(0.01, 0.01, 0.01);
             camera.add(textMesh);
         }
 
@@ -573,7 +570,9 @@
                             const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 1.8;
                             modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
 
-                            crearLienzoTexto3D(nubeFinal);
+                            // Creamos el texto de manera independiente al centro de la pantalla
+                            crearLienzoTextoIndependiente();
+                            camera.attach(nubeFinal);
                         }
                         return;
                     }
@@ -615,7 +614,7 @@
                 nubeFinal.position.lerp(POSICION_MODELO_FINAL, 0.04);
 
                 if (textMesh) {
-                    const textoScale = 0.8;
+                    const textoScale = 4.0;
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
