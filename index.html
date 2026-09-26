@@ -230,12 +230,12 @@
         const ESCALA_MODELO_GLTF = 0.2;
         const TAMAÑO_TEXTO = 0.9;
 
-        // Posicionamiento integrado: Altura en 0 (centrado en el núcleo de la nube) 
-        // y profundidad hacia adelante para sobresalir hacia la pantalla
-        const ALTURA_TEXTO = 0.0;
-        const PROFUNDIDAD_TEXTO = 0.45;
-
+        // Posición general de la nube final en pantalla
         const POSICION_MODELO_FINAL = new THREE.Vector3(0.6, -0.2, -3.5);
+
+        // Desplazamiento independiente del texto respecto a la nube para centrarlo exactamente en pantalla
+        const OFFSET_TEXTO_X = 0.0;
+        const OFFSET_TEXTO_Y = 0.0; // Ponele más o menos valor si querés subirlo/bajarlo milimétricamente
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -433,12 +433,12 @@
             textMesh = new THREE.Mesh(planeGeo, planeMat);
             textMesh.renderOrder = 999;
 
-            // Texto incrustado en el centro de la nube pero adelantado para sobresalir hacia la pantalla
-            textMesh.position.set(0, ALTURA_TEXTO, PROFUNDIDAD_TEXTO);
-            textMesh.rotation.y = Math.PI;
+            // Ahora el texto se anexa directamente a la cámara (independiente del centro desfasado del modelo 3D)
+            // para que quede perfectamente centrado en pantalla superpuesto sobre la nube.
+            textMesh.position.set(POSICION_MODELO_FINAL.x + OFFSET_TEXTO_X, POSICION_MODELO_FINAL.y + OFFSET_TEXTO_Y,
+                POSICION_MODELO_FINAL.z + 0.1);
 
-            textMesh.scale.set(0.01, 0.01, 0.01);
-            nubeFinal.add(textMesh);
+            camera.add(textMesh);
         }
 
         function actualizarTexturaNube() {
@@ -530,7 +530,6 @@
         function verificarFusion() {
             if (juegoTerminado) return;
 
-            // EFECTO IMÁN SUTIL: Cuando quedan 2 nubes, se acercan muy lentamente y de forma disimulada
             if (nubes.length === 2 && nubeArrastrada === null) {
                 nubes[0].position.lerp(nubes[1].position, 0.004);
             }
@@ -575,7 +574,6 @@
                             modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
 
                             crearLienzoTexto3D(nubeFinal);
-                            camera.attach(nubeFinal);
                         }
                         return;
                     }
@@ -617,8 +615,7 @@
                 nubeFinal.position.lerp(POSICION_MODELO_FINAL, 0.04);
 
                 if (textMesh) {
-                    const finalScale = ESCALA_MODELO_GLTF * 4;
-                    const textoScale = finalScale * 3.5;
+                    const textoScale = 0.8;
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
