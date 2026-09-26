@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.31</div>
+    <div id="version-tag">version 1.32</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -218,7 +218,7 @@
         let isCalibrated = false;
         let juegoTerminado = false;
 
-        let modelosBase = []; // Almacenará nubejonas y nubejonas2
+        let modelosBase = [];
         let modelosCargadosCount = 0;
 
         let textCanvas, textTexture, textMesh;
@@ -251,7 +251,7 @@
         const loader = new THREE.GLTFLoader();
         const archivosModelos = ['model/nubejonas.glb', 'model/nubejonas2.glb'];
 
-        // Cargar ambos modelos GLB de variantes
+        // Cargar ambos modelos GLB sin bordes negros
         archivosModelos.forEach((ruta, index) => {
             loader.load(ruta, function (gltf) {
                 const modeloBase = gltf.scene;
@@ -262,21 +262,11 @@
                     transparent: true,
                     opacity: 0.95
                 });
-                const materialContorno = new THREE.MeshBasicMaterial({
-                    color: 0x000000,
-                    side: THREE.BackSide
-                });
 
-                const mallas = [];
                 modeloBase.traverse((child) => {
-                    if (child.isMesh) mallas.push(child);
-                });
-
-                mallas.forEach((mesh) => {
-                    mesh.material = materialNube;
-                    const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
-                    contorno.scale.set(1.05, 1.05, 1.05);
-                    mesh.add(contorno);
+                    if (child.isMesh) {
+                        child.material = materialNube;
+                    }
                 });
 
                 modelosBase[index] = modeloBase;
@@ -358,7 +348,6 @@
                 scene.add(directionalLight);
             }
 
-            // EXACTAMENTE 4 NUBES DISTRIBUIDAS EN EL ESPACIO 360°
             const posiciones4Nubes = [
                 new THREE.Vector3(0, 0.5, -3.0), // 1. Al frente
                 new THREE.Vector3(3.0, 0.2, -2.0), // 2. A la derecha
@@ -369,7 +358,6 @@
             posiciones4Nubes.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
 
-                // Elegir aleatoriamente entre nubejonas (0) y nubejonas2 (1)
                 const modeloAleatorio = modelosBase[Math.floor(Math.random() * modelosBase.length)];
                 const nubeVisual = modeloAleatorio.clone();
 
@@ -461,7 +449,6 @@
             const ctx = textCanvas.getContext('2d');
             ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
 
-            // Inversión horizontal para corregir efecto espejo
             ctx.save();
             ctx.scale(-1, 1);
             ctx.translate(-textCanvas.width, 0);
@@ -552,9 +539,10 @@
                     const n2 = nubes[j];
 
                     const distancia = n1.position.distanceTo(n2.position);
-                    const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.6;
-                    const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.6;
-                    const umbralFusion = (radioVisual1 + radioVisual2) * 1.8;
+                    const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.4;
+                    const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.4;
+                    // Umbral de fusión reducido para requerir mayor cercanía física
+                    const umbralFusion = (radioVisual1 + radioVisual2) * 1.1;
 
                     if (distancia < umbralFusion) {
                         n1.userData.tamano += n2.userData.tamano;
