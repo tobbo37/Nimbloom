@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.33</div>
+    <div id="version-tag">version 1.34</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -241,10 +241,7 @@
         const correctionQuaternion = new THREE.Quaternion();
 
         const COLORES = {
-            violeta: 0xA558CC,
             lavanda: 0xC2C2F4,
-            lila: 0xD9AAF1,
-            blanco: 0xFDF7FF,
             amarillo: 0xFFFEAE
         };
 
@@ -255,16 +252,11 @@
             loader.load(ruta, function (gltf) {
                 const modeloBase = gltf.scene;
 
-                const materialNube = new THREE.MeshLambertMaterial({
-                    color: COLORES.blanco,
-                    flatShading: true,
-                    transparent: true,
-                    opacity: 0.95
-                });
-
+                // Mantenemos los materiales originales del GLB para respetar sus colores propios
                 modeloBase.traverse((child) => {
-                    if (child.isMesh) {
-                        child.material = materialNube;
+                    if (child.isMesh && child.material) {
+                        child.material.transparent = true;
+                        child.material.opacity = 0.98;
                     }
                 });
 
@@ -338,11 +330,11 @@
             renderer.setPixelRatio(window.devicePixelRatio);
 
             if (!scene.getObjectByName('luzAmbiental')) {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 1.2); // Luz más luminosa para resaltar colores
                 ambientLight.name = 'luzAmbiental';
                 scene.add(ambientLight);
 
-                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.6);
+                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.8);
                 directionalLight.position.set(5, 12, 8);
                 scene.add(directionalLight);
             }
@@ -532,6 +524,11 @@
         function verificarFusion() {
             if (juegoTerminado) return;
 
+            // EFECTO IMÁN: Cuando quedan exactamente 2 nubes, se acercan suavemente entre sí
+            if (nubes.length === 2 && nubeArrastrada === null) {
+                nubes[0].position.lerp(nubes[1].position, 0.008);
+            }
+
             for (let i = 0; i < nubes.length; i++) {
                 for (let j = i + 1; j < nubes.length; j++) {
                     const n1 = nubes[i];
@@ -563,11 +560,10 @@
                             guiaIzquierda.style.display = 'none';
                             guiaDerecha.style.display = 'none';
 
-                            // FORZAR MODELO FIJO: Al quedar 1 sola, se convierte siempre en el primer modelo (nubejonas.glb)
+                            // LA NUBE FINAL ES SIEMPRE "nubejonas.glb"
                             const nubeFinal = nubes[0];
                             const modeloFijoBase = modelosBase[0].clone();
 
-                            // Remover visual viejo y asignar el modelo fijo limpio
                             nubeFinal.remove(nubeFinal.children[0]);
                             nubeFinal.add(modeloFijoBase);
 
@@ -622,17 +618,9 @@
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
-                nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
-
-                nubeFinal.traverse((child) => {
-                    if (child.isMesh && child !== textMesh && child.material.side !== THREE.BackSide) {
-                        const tiempo = Date.now() * 0.001;
-                        const r = 194 + Math.sin(tiempo) * 23;
-                        const g = 194 - Math.sin(tiempo) * 24;
-                        const b = 244 + Math.sin(tiempo) * -3;
-                        child.material.color.setRGB(r / 255, g / 255, b / 255);
-                    }
-                });
+                // ROTACIÓN FINAL: Volteada 90 grados (Math.PI / 2) para que quede de lado
+                const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
+                nubeFinal.quaternion.slerp(targetRot, 0.04);
 
                 actualizarTexturaNube();
             } else {
