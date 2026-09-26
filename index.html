@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.38</div>
+    <div id="version-tag">version 1.39</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -230,11 +230,11 @@
         const ESCALA_MODELO_GLTF = 0.2;
         const TAMAÑO_TEXTO = 0.9;
 
-        // Ajustes para que el texto quede centrado estrictamente ENCIMA de la nube
-        const ALTURA_TEXTO = 1.6;
-        const PROFUNDIDAD_TEXTO = 0.0;
+        // Posicionamiento integrado: Altura en 0 (centrado en el núcleo de la nube) 
+        // y profundidad hacia adelante para sobresalir hacia la pantalla
+        const ALTURA_TEXTO = 0.0;
+        const PROFUNDIDAD_TEXTO = 0.45;
 
-        // Modificá el primer valor (ej: 0.6 o 1.2) para mover la nube final más a la derecha
         const POSICION_MODELO_FINAL = new THREE.Vector3(0.6, -0.2, -3.5);
         // ==========================================
 
@@ -357,8 +357,6 @@
                 const nubeVisual = modeloAleatorio.clone();
 
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
-
-                // Rotación estática inicial para que se vean de lado desde el inicio
                 nubeVisual.rotation.y = Math.PI / 2;
 
                 nubeGrupo.add(nubeVisual);
@@ -435,7 +433,7 @@
             textMesh = new THREE.Mesh(planeGeo, planeMat);
             textMesh.renderOrder = 999;
 
-            // Posición centrada exactamente encima de la nube
+            // Texto incrustado en el centro de la nube pero adelantado para sobresalir hacia la pantalla
             textMesh.position.set(0, ALTURA_TEXTO, PROFUNDIDAD_TEXTO);
             textMesh.rotation.y = Math.PI;
 
@@ -627,14 +625,12 @@
                 nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
 
                 if (modeloVisualFinal) {
-                    // Rotación estática fija de lado para la nube final (sin cambiar según la visión del usuario)
                     const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
                     modeloVisualFinal.quaternion.slerp(targetRotModelo, 0.04);
                 }
 
                 actualizarTexturaNube();
             } else {
-                // Las nubes normales durante el juego mantienen su rotación fija de lado
                 nubes.forEach(nube => {
                     if (nube.children[0]) {
                         nube.children[0].rotation.y = Math.PI / 2;
