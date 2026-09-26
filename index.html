@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.36</div>
+    <div id="version-tag">version 1.37</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -232,7 +232,6 @@
         const ALTURA_TEXTO = 1.0;
         const PROFUNDIDAD_TEXTO = -0.5;
 
-        // Posición final desplazada más a la derecha (X positivo) y más arriba (Y positivo)
         const POSICION_MODELO_FINAL = new THREE.Vector3(0.6, -0.2, -3.5);
         // ==========================================
 
@@ -537,9 +536,8 @@
                     const n2 = nubes[j];
 
                     const distancia = n1.position.distanceTo(n2.position);
-                    const radioVisual1 = Math.cbrt(n1.userData.tamano) * 0.4;
-                    const radioVisual2 = Math.cbrt(n2.userData.tamano) * 0.4;
-                    const umbralFusion = (radioVisual1 + radioVisual2) * 1.1;
+                    // Umbral de fusión optimizado para asegurar detección fluida en todo el espacio
+                    const umbralFusion = 1.2;
 
                     if (distancia < umbralFusion) {
                         n1.userData.tamano += n2.userData.tamano;
@@ -612,7 +610,6 @@
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
 
-                // Se mueve a la nueva posición más a la derecha y más arriba
                 nubeFinal.position.lerp(POSICION_MODELO_FINAL, 0.04);
 
                 if (textMesh) {
