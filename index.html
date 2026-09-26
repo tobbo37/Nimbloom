@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.39</div>
+    <div id="version-tag">version 1.40</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -228,13 +228,12 @@
         // VARIABLES DE AJUSTE
         // ==========================================
         const ESCALA_MODELO_GLTF = 0.2;
-        const TAMAÑO_TEXTO = 1.2;
+        const TAMAÑO_TEXTO = 0.8; // Tamaño del texto reducido
 
-        // Posición independiente para el texto (anclado directamente a la cámara para centrado perfecto en pantalla)
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
 
-        // Posición final de la nube (puedes mover el primer valor X para desplazarla a la derecha)
-        const POSICION_MODELO_FINAL = new THREE.Vector3(0.6, -0.2, -3.5);
+        // Modelo final movido mucho más a la derecha (Eje X en 1.5)
+        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, -0.2, -3.5);
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -432,7 +431,6 @@
             textMesh = new THREE.Mesh(planeGeo, planeMat);
             textMesh.renderOrder = 999;
 
-            // Adjuntamos el texto directamente a la CÁMARA para que quede 100% centrado en la pantalla
             textMesh.position.copy(OFFSET_TEXTO);
             textMesh.scale.set(0.01, 0.01, 0.01);
             camera.add(textMesh);
@@ -443,10 +441,7 @@
             const ctx = textCanvas.getContext('2d');
             ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
 
-            ctx.save();
-            ctx.scale(-1, 1);
-            ctx.translate(-textCanvas.width, 0);
-
+            // CORRECCIÓN: Sin inversión horizontal para que el texto se lea derecho y natural
             const ahora = new Date();
             let anioActual = ahora.getFullYear();
             let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
@@ -481,7 +476,6 @@
             ctx.font = '700 70px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 700);
 
-            ctx.restore();
             textTexture.needsUpdate = true;
         }
 
@@ -570,7 +564,6 @@
                             const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 1.8;
                             modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
 
-                            // Creamos el texto de manera independiente al centro de la pantalla
                             crearLienzoTextoIndependiente();
                             camera.attach(nubeFinal);
                         }
@@ -614,7 +607,7 @@
                 nubeFinal.position.lerp(POSICION_MODELO_FINAL, 0.04);
 
                 if (textMesh) {
-                    const textoScale = 4.0;
+                    const textoScale = 2.8; // Escala reducida para que el texto sea más compacto
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
