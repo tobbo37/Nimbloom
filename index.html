@@ -218,10 +218,8 @@
         let isCalibrated = false;
         let juegoTerminado = false;
 
-        // Dos variantes de modelos GLTF
-        let modeloBase1 = null;
-        let modeloBase2 = null;
-        let modelosCargados = 0;
+        let modelosBase = []; // Almacenará nubejonas y nubejonas2
+        let modelosCargadosCount = 0;
 
         let textCanvas, textTexture, textMesh;
 
@@ -251,56 +249,48 @@
         };
 
         const loader = new THREE.GLTFLoader();
+        const archivosModelos = ['model/nubejonas.glb', 'model/nubejonas2.glb'];
 
-        function prepararModelo(gltfScene) {
-            const materialNube = new THREE.MeshLambertMaterial({
-                color: COLORES.blanco,
-                flatShading: true,
-                transparent: true,
-                opacity: 0.95
-            });
-            const materialContorno = new THREE.MeshBasicMaterial({
-                color: 0x000000,
-                side: THREE.BackSide
-            });
+        // Cargar ambos modelos GLB de variantes
+        archivosModelos.forEach((ruta, index) => {
+            loader.load(ruta, function (gltf) {
+                const modeloBase = gltf.scene;
 
-            const mallas = [];
-            gltfScene.traverse((child) => {
-                if (child.isMesh) mallas.push(child);
-            });
+                const materialNube = new THREE.MeshLambertMaterial({
+                    color: COLORES.blanco,
+                    flatShading: true,
+                    transparent: true,
+                    opacity: 0.95
+                });
+                const materialContorno = new THREE.MeshBasicMaterial({
+                    color: 0x000000,
+                    side: THREE.BackSide
+                });
 
-            mallas.forEach((mesh) => {
-                mesh.material = materialNube;
-                const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
-                contorno.scale.set(1.05, 1.05, 1.05);
-                mesh.add(contorno);
-            });
-            return gltfScene;
-        }
+                const mallas = [];
+                modeloBase.traverse((child) => {
+                    if (child.isMesh) mallas.push(child);
+                });
 
-        // Cargar modelo 1: nubesjonas.glb
-        loader.load('model/nubesjonas.glb', function (gltf) {
-            modeloBase1 = prepararModelo(gltf.scene);
-            verificarCargaCompleta();
-        }, undefined, function (error) {
-            console.error("Error al cargar model/nubesjonas.glb", error);
+                mallas.forEach((mesh) => {
+                    mesh.material = materialNube;
+                    const contorno = new THREE.Mesh(mesh.geometry, materialContorno);
+                    contorno.scale.set(1.05, 1.05, 1.05);
+                    mesh.add(contorno);
+                });
+
+                modelosBase[index] = modeloBase;
+                modelosCargadosCount++;
+
+                if (modelosCargadosCount === archivosModelos.length) {
+                    btnIniciar.innerText = "CONECTAR";
+                    btnIniciar.disabled = false;
+                }
+
+            }, undefined, function (error) {
+                console.error("Error al cargar " + ruta, error);
+            });
         });
-
-        // Cargar modelo 2: nubesjonas2.glb
-        loader.load('model/nubesjonas2.glb', function (gltf) {
-            modeloBase2 = prepararModelo(gltf.scene);
-            verificarCargaCompleta();
-        }, undefined, function (error) {
-            console.error("Error al cargar model/nubesjonas2.glb", error);
-        });
-
-        function verificarCargaCompleta() {
-            modelosCargados++;
-            if (modelosCargados === 2) {
-                btnIniciar.innerText = "CONECTAR";
-                btnIniciar.disabled = false;
-            }
-        }
 
         btnIniciar.addEventListener('click', async () => {
             try {
@@ -368,6 +358,7 @@
                 scene.add(directionalLight);
             }
 
+            // EXACTAMENTE 4 NUBES DISTRIBUIDAS EN EL ESPACIO 360°
             const posiciones4Nubes = [
                 new THREE.Vector3(0, 0.5, -3.0), // 1. Al frente
                 new THREE.Vector3(3.0, 0.2, -2.0), // 2. A la derecha
@@ -378,9 +369,9 @@
             posiciones4Nubes.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
 
-                // Variantes aleatorias entre nubesjonas.glb y nubesjonas2.glb
-                const modeloElegido = (Math.random() < 0.5) ? modeloBase1 : modeloBase2;
-                const nubeVisual = modeloElegido.clone();
+                // Elegir aleatoriamente entre nubejonas (0) y nubejonas2 (1)
+                const modeloAleatorio = modelosBase[Math.floor(Math.random() * modelosBase.length)];
+                const nubeVisual = modeloAleatorio.clone();
 
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
 
