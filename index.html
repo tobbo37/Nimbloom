@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.35</div>
+    <div id="version-tag">version 1.36</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -222,7 +222,7 @@
         let modelosCargadosCount = 0;
 
         let textCanvas, textTexture, textMesh;
-        let modeloVisualFinal = null; // Referencia independiente al modelo 3D de la nube
+        let modeloVisualFinal = null;
 
         // ==========================================
         // VARIABLES DE AJUSTE
@@ -231,7 +231,9 @@
         const TAMAÑO_TEXTO = 0.9;
         const ALTURA_TEXTO = 1.0;
         const PROFUNDIDAD_TEXTO = -0.5;
-        const ALTURA_MODELO_FINAL = -0.8;
+
+        // Posición final desplazada más a la derecha (X positivo) y más arriba (Y positivo)
+        const POSICION_MODELO_FINAL = new THREE.Vector3(0.6, -0.2, -3.5);
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -432,8 +434,6 @@
             textMesh.rotation.y = Math.PI;
 
             textMesh.scale.set(0.01, 0.01, 0.01);
-
-            // Adjuntamos el texto directamente al grupo principal para que NO rote con el modelo de la nube
             nubeFinal.add(textMesh);
         }
 
@@ -526,9 +526,9 @@
         function verificarFusion() {
             if (juegoTerminado) return;
 
-            // EFECTO IMÁN: Cuando quedan exactamente 2 nubes, se acercan suavemente entre sí
+            // EFECTO IMÁN SUTIL: Cuando quedan 2 nubes, se acercan muy lentamente y de forma disimulada
             if (nubes.length === 2 && nubeArrastrada === null) {
-                nubes[0].position.lerp(nubes[1].position, 0.008);
+                nubes[0].position.lerp(nubes[1].position, 0.004);
             }
 
             for (let i = 0; i < nubes.length; i++) {
@@ -562,13 +562,12 @@
                             guiaIzquierda.style.display = 'none';
                             guiaDerecha.style.display = 'none';
 
-                            // LA NUBE FINAL ES SIEMPRE "nubejonas.glb"
                             const nubeFinal = nubes[0];
                             const modeloFijoBase = modelosBase[0].clone();
 
                             nubeFinal.remove(nubeFinal.children[0]);
                             nubeFinal.add(modeloFijoBase);
-                            modeloVisualFinal = modeloFijoBase; // Guardamos referencia independiente para rotarla sola
+                            modeloVisualFinal = modeloFijoBase;
 
                             const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 1.8;
                             modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
@@ -613,7 +612,8 @@
             if (juegoTerminado && nubes.length > 0) {
                 const nubeFinal = nubes[0];
 
-                nubeFinal.position.lerp(new THREE.Vector3(0, ALTURA_MODELO_FINAL, -3.5), 0.04);
+                // Se mueve a la nueva posición más a la derecha y más arriba
+                nubeFinal.position.lerp(POSICION_MODELO_FINAL, 0.04);
 
                 if (textMesh) {
                     const finalScale = ESCALA_MODELO_GLTF * 4;
@@ -621,10 +621,8 @@
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
-                // Mantenemos el grupo principal sin rotar para que el texto mire siempre de frente a la cámara
                 nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
 
-                // ROTACIÓN EXCLUSIVA DEL MODELO DE LA NUBE: Gira 90 grados (Math.PI / 2) de forma independiente
                 if (modeloVisualFinal) {
                     const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
                     modeloVisualFinal.quaternion.slerp(targetRotModelo, 0.04);
