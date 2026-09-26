@@ -176,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.34</div>
+    <div id="version-tag">version 1.35</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -222,6 +222,7 @@
         let modelosCargadosCount = 0;
 
         let textCanvas, textTexture, textMesh;
+        let modeloVisualFinal = null; // Referencia independiente al modelo 3D de la nube
 
         // ==========================================
         // VARIABLES DE AJUSTE
@@ -252,7 +253,6 @@
             loader.load(ruta, function (gltf) {
                 const modeloBase = gltf.scene;
 
-                // Mantenemos los materiales originales del GLB para respetar sus colores propios
                 modeloBase.traverse((child) => {
                     if (child.isMesh && child.material) {
                         child.material.transparent = true;
@@ -330,7 +330,7 @@
             renderer.setPixelRatio(window.devicePixelRatio);
 
             if (!scene.getObjectByName('luzAmbiental')) {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 1.2); // Luz más luminosa para resaltar colores
+                const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
                 ambientLight.name = 'luzAmbiental';
                 scene.add(ambientLight);
 
@@ -432,6 +432,8 @@
             textMesh.rotation.y = Math.PI;
 
             textMesh.scale.set(0.01, 0.01, 0.01);
+
+            // Adjuntamos el texto directamente al grupo principal para que NO rote con el modelo de la nube
             nubeFinal.add(textMesh);
         }
 
@@ -566,9 +568,10 @@
 
                             nubeFinal.remove(nubeFinal.children[0]);
                             nubeFinal.add(modeloFijoBase);
+                            modeloVisualFinal = modeloFijoBase; // Guardamos referencia independiente para rotarla sola
 
                             const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 1.8;
-                            modeloFijoBase.scale.set(finalScale, finalScale, finalScale);
+                            modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
 
                             crearLienzoTexto3D(nubeFinal);
                             camera.attach(nubeFinal);
@@ -618,9 +621,14 @@
                     textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
                 }
 
-                // ROTACIÓN FINAL: Volteada 90 grados (Math.PI / 2) para que quede de lado
-                const targetRot = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
-                nubeFinal.quaternion.slerp(targetRot, 0.04);
+                // Mantenemos el grupo principal sin rotar para que el texto mire siempre de frente a la cámara
+                nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
+
+                // ROTACIÓN EXCLUSIVA DEL MODELO DE LA NUBE: Gira 90 grados (Math.PI / 2) de forma independiente
+                if (modeloVisualFinal) {
+                    const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
+                    modeloVisualFinal.quaternion.slerp(targetRotModelo, 0.04);
+                }
 
                 actualizarTexturaNube();
             } else {
