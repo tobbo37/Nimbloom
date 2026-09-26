@@ -47,20 +47,6 @@
             z-index: 2;
         }
 
-        #version-tag {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            z-index: 20;
-            color: #FDF7FF;
-            background: rgba(165, 88, 204, 0.5);
-            padding: 5px 10px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            pointer-events: none;
-        }
-
         #btn-recalibrar {
             position: absolute;
             top: 15px;
@@ -158,6 +144,32 @@
             color: #A558CC;
         }
 
+        #btn-reiniciar {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            background-color: #A558CC;
+            border: 2px solid #FDF7FF;
+            color: #FDF7FF;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            display: none;
+            pointer-events: auto;
+            font-family: 'Quicksand', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        #btn-reiniciar:active {
+            background-color: #FFFEAE;
+            color: #A558CC;
+        }
+
         #info {
             color: #A558CC;
             background: rgba(253, 247, 255, 0.9);
@@ -176,7 +188,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.41</div>
+    <button id="btn-reiniciar">↻ Volver a empezar</button>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -200,6 +212,7 @@
     <script>
         const btnIniciar = document.getElementById('btn-iniciar');
         const btnRecalibrar = document.getElementById('btn-recalibrar');
+        const btnReiniciar = document.getElementById('btn-reiniciar');
         const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
@@ -231,9 +244,7 @@
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-
-        // Nube final ubicada a la derecha y con la altura 0.4 que pediste
-        const POSICION_MODELO_FINAL = new THREE.Vector3(2, 0.4, -3.5);
+        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, 0.4, -3.5);
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -316,6 +327,10 @@
 
         btnRecalibrar.addEventListener('click', () => {
             isCalibrated = false;
+        });
+
+        btnReiniciar.addEventListener('click', () => {
+            window.location.reload();
         });
 
         function init3D() {
@@ -455,14 +470,14 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Título NIMBLOOM
-            ctx.shadowColor = 'rgba(165, 88, 204, 0.9)';
-            ctx.shadowBlur = 15;
-            ctx.fillStyle = '#FFFEAE';
+            // Título NIMBLOOM: Resplandor violeta con letras interiores blancas
+            ctx.shadowColor = 'rgba(165, 88, 204, 0.95)';
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = '#FFFFFF';
             ctx.font = '400 130px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 380);
 
-            // Contador de días, horas, minutos y segundos
+            // Contador de días, horas, minutos y segundos (sin resplandor, color violeta original)
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
             ctx.font = '700 95px "Quicksand"';
@@ -470,7 +485,7 @@
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 560);
 
-            // Fecha 10 de Octubre
+            // Fecha 10 de Octubre (color original)
             ctx.fillStyle = '#C2C2F4';
             ctx.font = '700 70px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 700);
@@ -520,8 +535,6 @@
         function verificarFusion() {
             if (juegoTerminado) return;
 
-            // EFECTO IMÁN INVERTIDO: Cuando quedan 2 nubes y no las estás arrastrando, 
-            // la nube [0] (la más grande/fusionada) se queda fija y la nube [1] se acerca lentamente hacia ella.
             if (nubes.length === 2 && nubeArrastrada === null) {
                 nubes[1].position.lerp(nubes[0].position, 0.004);
             }
@@ -550,6 +563,7 @@
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
                             btnRecalibrar.style.display = 'none';
+                            btnReiniciar.style.display = 'block'; // Mostrar botón de reinicio
                             guiaArriba.style.display = 'none';
                             guiaAbajo.style.display = 'none';
                             guiaIzquierda.style.display = 'none';
