@@ -20,7 +20,6 @@
             height: 100%;
             overflow: hidden;
             background-color: black;
-            /* Fondo.png abarcando toda la pantalla sin recortes forzados */
             background-image: url('img/fondo.png');
             background-size: 100% 100%;
             background-position: center;
@@ -177,7 +176,7 @@
 <body>
 
     <button id="btn-recalibrar">⟲ Centrar vista</button>
-    <div id="version-tag">version 1.30</div>
+    <div id="version-tag">version 1.31</div>
     <div id="contador-nubes">Nubes: 4</div>
 
     <!-- Flechas guía para el universo 360° -->
@@ -192,7 +191,7 @@
     <div id="ui">
         <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si
             alguna se oculta.</div>
-        <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELO...</button>
+        <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELOS...</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -218,7 +217,12 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
-        let modeloGLTFBase = null;
+
+        // Dos variantes de modelos GLTF
+        let modeloBase1 = null;
+        let modeloBase2 = null;
+        let modelosCargados = 0;
+
         let textCanvas, textTexture, textMesh;
 
         // ==========================================
@@ -247,9 +251,8 @@
         };
 
         const loader = new THREE.GLTFLoader();
-        loader.load('model/nube.glb', function (gltf) {
-            modeloGLTFBase = gltf.scene;
 
+        function prepararModelo(gltfScene) {
             const materialNube = new THREE.MeshLambertMaterial({
                 color: COLORES.blanco,
                 flatShading: true,
@@ -262,7 +265,7 @@
             });
 
             const mallas = [];
-            modeloGLTFBase.traverse((child) => {
+            gltfScene.traverse((child) => {
                 if (child.isMesh) mallas.push(child);
             });
 
@@ -272,13 +275,32 @@
                 contorno.scale.set(1.05, 1.05, 1.05);
                 mesh.add(contorno);
             });
+            return gltfScene;
+        }
 
-            btnIniciar.innerText = "CONECTAR";
-            btnIniciar.disabled = false;
-
+        // Cargar modelo 1: nubesjonas.glb
+        loader.load('model/nubesjonas.glb', function (gltf) {
+            modeloBase1 = prepararModelo(gltf.scene);
+            verificarCargaCompleta();
         }, undefined, function (error) {
-            infoDiv.innerText = "Error al cargar model/nube.glb. Verifica la ruta.";
+            console.error("Error al cargar model/nubesjonas.glb", error);
         });
+
+        // Cargar modelo 2: nubesjonas2.glb
+        loader.load('model/nubesjonas2.glb', function (gltf) {
+            modeloBase2 = prepararModelo(gltf.scene);
+            verificarCargaCompleta();
+        }, undefined, function (error) {
+            console.error("Error al cargar model/nubesjonas2.glb", error);
+        });
+
+        function verificarCargaCompleta() {
+            modelosCargados++;
+            if (modelosCargados === 2) {
+                btnIniciar.innerText = "CONECTAR";
+                btnIniciar.disabled = false;
+            }
+        }
 
         btnIniciar.addEventListener('click', async () => {
             try {
@@ -346,7 +368,6 @@
                 scene.add(directionalLight);
             }
 
-            // EXACTAMENTE 4 NUBES DISTRIBUIDAS EN EL ESPACIO 360°
             const posiciones4Nubes = [
                 new THREE.Vector3(0, 0.5, -3.0), // 1. Al frente
                 new THREE.Vector3(3.0, 0.2, -2.0), // 2. A la derecha
@@ -356,7 +377,11 @@
 
             posiciones4Nubes.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
-                const nubeVisual = modeloGLTFBase.clone();
+
+                // Variantes aleatorias entre nubesjonas.glb y nubesjonas2.glb
+                const modeloElegido = (Math.random() < 0.5) ? modeloBase1 : modeloBase2;
+                const nubeVisual = modeloElegido.clone();
+
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
 
                 nubeGrupo.add(nubeVisual);
