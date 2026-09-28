@@ -124,7 +124,7 @@
             font-size: 18px;
             font-weight: 700;
             border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             cursor: pointer;
             width: 100%;
             pointer-events: auto;
@@ -157,7 +157,7 @@
             font-size: 16px;
             font-weight: 700;
             border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             cursor: pointer;
             display: none;
             pointer-events: auto;
@@ -201,8 +201,7 @@
     <canvas id="canvas-3d"></canvas>
 
     <div id="ui">
-        <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si
-            alguna se oculta.</div>
+        <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si alguna se oculta.</div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELOS...</button>
     </div>
 
@@ -230,11 +229,10 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
+        
+        let tiempoDosNubes = null; 
 
-        // Control de tiempo para el imán de las últimas 2 nubes
-        let tiempoDosNubes = null;
-
-        let modelosBase = [];
+        let modelosBase = []; 
         let modelosCargadosCount = 0;
 
         let textCanvas, textTexture, textMesh;
@@ -245,9 +243,9 @@
         // ==========================================
         const ESCALA_MODELO_GLTF = 0.2;
         const TAMAÑO_TEXTO = 0.8;
-
-        const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        const POSICION_MODELO_FINAL = new THREE.Vector3(2.1, 0.4, -3.5);
+        
+        const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2); 
+        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, 0.4, -3.5);
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -291,27 +289,35 @@
 
         btnIniciar.addEventListener('click', async () => {
             try {
-                const constraints = {
-                    video: {
-                        facingMode: {
-                            exact: "environment"
-                        }
-                    }
-                };
-                let stream;
+                let stream = null;
+
+                // Intento robusto compatible con iPhone/Safari (usando ideal en vez de exact)
                 try {
-                    stream = await navigator.mediaDevices.getUserMedia(constraints);
-                } catch (e) {
                     stream = await navigator.mediaDevices.getUserMedia({
-                        video: true
+                        video: { facingMode: { ideal: "environment" } },
+                        audio: false
                     });
+                } catch (e1) {
+                    // Plan B: Si falla la trasera ideal, intenta con cualquier cámara genérica disponible
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                            audio: false
+                        });
+                    } catch (e2) {
+                        throw new Error("No se pudo acceder a la cámara.");
+                    }
                 }
+
                 videoElement.srcObject = stream;
 
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
-                    .requestPermission === 'function') {
+                // Permiso de orientación para iOS 13+
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState !== 'granted') return;
+                    if (permissionState !== 'granted') {
+                        alert("Se requieren permisos de movimiento para la experiencia AR.");
+                        return;
+                    }
                 }
 
                 document.getElementById('ui').style.display = 'none';
@@ -324,7 +330,7 @@
                 });
 
             } catch (error) {
-                alert("Error de cámara.");
+                alert("Error de cámara: Asegúrate de otorgar permisos de video y abrir la página mediante HTTPS o localhost.");
             }
         });
 
@@ -360,18 +366,18 @@
             }
 
             const posiciones4Nubes = [
-                new THREE.Vector3(0, 0.5, -3.0), // 1. Al frente
-                new THREE.Vector3(3.0, 0.2, -2.0), // 2. A la derecha
+                new THREE.Vector3(0, 0.5, -3.0),    // 1. Al frente
+                new THREE.Vector3(3.0, 0.2, -2.0),  // 2. A la derecha
                 new THREE.Vector3(-3.0, 0.2, -2.0), // 3. A la izquierda
-                new THREE.Vector3(0, 2.2, 1.5) // 4. Arriba y hacia atrás
+                new THREE.Vector3(0, 2.2, 1.5)      // 4. Arriba y hacia atrás
             ];
 
             posiciones4Nubes.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
-
+                
                 const modeloAleatorio = modelosBase[Math.floor(Math.random() * modelosBase.length)];
                 const nubeVisual = modeloAleatorio.clone();
-
+                
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
                 nubeVisual.rotation.y = Math.PI / 2;
 
@@ -421,8 +427,7 @@
 
             raycaster.setFromCamera(mouse, camera);
             const dirRayo = raycaster.ray.direction.clone();
-            nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData
-                .distanciaFija));
+            nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData.distanciaFija));
         }
 
         function onPointerUp() {
@@ -443,7 +448,7 @@
                 transparent: true,
                 depthWrite: false,
                 depthTest: false,
-                side: THREE.DoubleSide
+                side: THREE.DoubleSide 
             });
 
             textMesh = new THREE.Mesh(planeGeo, planeMat);
@@ -538,16 +543,14 @@
         function verificarFusion() {
             if (juegoTerminado) return;
 
-            // Lógica de 2 nubes con retraso de 5 segundos e imán ultra lento
             if (nubes.length === 2) {
                 if (!tiempoDosNubes) {
-                    tiempoDosNubes = Date.now(); // Marca el momento exacto en que quedan 2 nubes
+                    tiempoDosNubes = Date.now(); 
                 } else if (nubeArrastrada === null && (Date.now() - tiempoDosNubes >= 5000)) {
-                    // Pasados 5 segundos, la nube [1] se acerca súper lento hacia la nube [0]
                     nubes[1].position.lerp(nubes[0].position, 0.0015);
                 }
             } else {
-                tiempoDosNubes = null; // Resetea si hay más o menos de 2 nubes
+                tiempoDosNubes = null; 
             }
 
             for (let i = 0; i < nubes.length; i++) {
@@ -556,7 +559,7 @@
                     const n2 = nubes[j];
 
                     const distancia = n1.position.distanceTo(n2.position);
-                    const umbralFusion = 1.2;
+                    const umbralFusion = 1.2; 
 
                     if (distancia < umbralFusion) {
                         n1.userData.tamano += n2.userData.tamano;
@@ -574,7 +577,7 @@
                             juegoTerminado = true;
                             contadorDiv.style.display = 'none';
                             btnRecalibrar.style.display = 'none';
-                            btnReiniciar.style.display = 'block';
+                            btnReiniciar.style.display = 'block'; 
                             guiaArriba.style.display = 'none';
                             guiaAbajo.style.display = 'none';
                             guiaIzquierda.style.display = 'none';
@@ -582,7 +585,7 @@
 
                             const nubeFinal = nubes[0];
                             const modeloFijoBase = modelosBase[0].clone();
-
+                            
                             nubeFinal.remove(nubeFinal.children[0]);
                             nubeFinal.add(modeloFijoBase);
                             modeloVisualFinal = modeloFijoBase;
