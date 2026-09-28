@@ -218,8 +218,8 @@
         <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si
             alguna se oculta.</div>
         <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELOS...</button>
-        <div id="aviso-navegador">💡 Si estás en el celular y da error de cámara, abre este enlace directamente en
-            <b>Safari</b> o <b>Chrome</b>.</div>
+        <div id="aviso-navegador">💡 Si estás en el celular y da error, abre este enlace directamente en <b>Safari</b> o
+            <b>Chrome</b>.</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -262,7 +262,7 @@
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, 0.4, -3.5);
+        const POSICION_MODELO_FINAL = new THREE.Vector3(2, 0.4, -3.5);
         // ==========================================
 
         const targetQuaternion = new THREE.Quaternion();
@@ -306,10 +306,21 @@
 
         btnIniciar.addEventListener('click', async () => {
             try {
+                // 1. PRIMERO PEDIMOS EL PERMISO DE ORIENTACIÓN (Exigido por iOS de forma inmediata al hacer clic)
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
+                    .requestPermission === 'function') {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState !== 'granted') {
+                        alert("Se requieren permisos de movimiento para la experiencia AR.");
+                        return;
+                    }
+                }
+
+                // 2. DESPUÉS PEDIMOS EL ACCESO A LA CÁMARA
                 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                     throw new Error(
                         "Tu navegador no soporta el acceso a la cámara. Abrilo desde la app nativa de Safari o Chrome."
-                        );
+                    );
                 }
 
                 let stream = null;
@@ -332,16 +343,6 @@
                 videoElement.srcObject = stream;
                 await videoElement.play().catch(() => {});
 
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
-                    .requestPermission === 'function') {
-                    const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState !== 'granted') {
-                        alert(
-                            "Es necesario permitir el acceso a los sensores de movimiento para la experiencia AR.");
-                        return;
-                    }
-                }
-
                 document.getElementById('ui').style.display = 'none';
                 contadorDiv.style.display = 'block';
                 btnRecalibrar.style.display = 'block';
@@ -352,9 +353,9 @@
                 });
 
             } catch (error) {
-                alert("Error de cámara: " + error.message +
+                alert("Error: " + error.message +
                     "\n\nSi estás en Instagram o WhatsApp, toca los tres puntos y selecciona 'Abrir en Safari/Chrome'."
-                    );
+                );
             }
         });
 
