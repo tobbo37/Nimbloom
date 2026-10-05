@@ -36,6 +36,7 @@
             height: 100%;
             object-fit: cover;
             z-index: 1;
+            display: none;
         }
 
         #canvas-3d {
@@ -104,58 +105,177 @@
             }
         }
 
+        /* PANTALLA PRINCIPAL / INTERFAZ INICIAL */
         #ui {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 10;
-            text-align: center;
-            width: 90%;
-            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 50px 25px;
+            box-sizing: border-box;
             pointer-events: none;
+            background: transparent;
+            transition: all 0.8s ease;
+        }
+
+        .header-ui {
+            text-align: center;
+            pointer-events: auto;
+            transition: all 0.8s ease;
+            margin-top: 20px;
+        }
+
+        .sub-titulo {
+            color: #FFFFFF;
+            opacity: 0.5;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .titulo-principal {
+            font-family: 'Cherry Bomb One', cursive;
+            font-size: 55px;
+            color: #FFFFFF;
+            -webkit-text-stroke: 2px #D9AAF1;
+            text-shadow: 0 0 20px rgba(217, 170, 241, 0.6);
+            margin: 0;
+        }
+
+        .caja-instruccion {
+            background-color: #FFFFFF;
+            border: 2px solid #D9AAF1;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 340px;
+            text-align: center;
+            pointer-events: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .caja-instruccion p {
+            color: #FFFEAE;
+            -webkit-text-stroke: 0.5px #D9AAF1;
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .footer-ui {
+            text-align: center;
+            width: 100%;
+            max-width: 360px;
+            pointer-events: auto;
         }
 
         .btn-principal {
-            background-color: #A558CC;
-            border: 2px solid #FDF7FF;
-            color: #FDF7FF;
-            padding: 15px 30px;
-            font-size: 18px;
+            background-color: #C2C2F4;
+            border: 2px solid #D9AAF1;
+            color: #FFFEAE;
+            -webkit-text-stroke: 0.6px #D9AAF1;
+            padding: 14px 25px;
+            font-size: 20px;
             font-weight: 700;
-            border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border-radius: 35px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
             cursor: pointer;
             width: 100%;
-            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             font-family: 'Quicksand', sans-serif;
             transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
 
         .btn-principal:disabled {
-            background-color: #ccc;
-            color: #666;
+            opacity: 0.6;
             cursor: not-allowed;
-            border-color: #999;
         }
 
-        .btn-principal:not(:disabled):active {
-            background-color: #FFFEAE;
-            color: #A558CC;
+        .btn-principal span.triangulo {
+            color: #FFFEAE;
+            font-size: 18px;
+            text-shadow: 0 0 5px #D9AAF1;
         }
 
-        #aviso-navegador {
-            margin-top: 15px;
-            color: #FDF7FF;
-            background: rgba(165, 88, 204, 0.4);
-            border: 1px solid #C2C2F4;
-            padding: 10px 15px;
-            border-radius: 10px;
+        .aviso-navegador {
+            color: #FFFEAE;
+            -webkit-text-stroke: 0.4px #D9AAF1;
             font-size: 13px;
             font-weight: 600;
-            pointer-events: auto;
             line-height: 1.4;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+        }
+
+        /* PANTALLA DE CARGA / TRANSICIÓN (3 SEGUNDOS) */
+        #pantalla-carga {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            z-index: 15;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .carga-titulo {
+            font-family: 'Cherry Bomb One', cursive;
+            font-size: 55px;
+            color: #FFFFFF;
+            -webkit-text-stroke: 2px #D9AAF1;
+            opacity: 0.5;
+            position: absolute;
+            top: 70px;
+            animation: subirTitulo 0.8s ease forwards;
+        }
+
+        @keyframes subirTitulo {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-20px);
+            }
+        }
+
+        .carga-texto-centro {
+            color: #FFFEAE;
+            -webkit-text-stroke: 0.5px #D9AAF1;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.5;
+            max-width: 340px;
+            animation: latidoOpacidad 1.5s infinite alternate ease-in-out;
+        }
+
+        @keyframes latidoOpacidad {
+            0% {
+                opacity: 0.5;
+                transform: scale(0.98);
+            }
+
+            100% {
+                opacity: 1.0;
+                transform: scale(1.02);
+            }
         }
 
         #btn-reiniciar {
@@ -183,19 +303,6 @@
             background-color: #FFFEAE;
             color: #A558CC;
         }
-
-        #info {
-            color: #A558CC;
-            background: rgba(253, 247, 255, 0.9);
-            border: 1px solid #C2C2F4;
-            padding: 15px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            pointer-events: auto;
-            line-height: 1.5;
-        }
     </style>
 </head>
 
@@ -214,12 +321,32 @@
     <video id="camara-video" autoplay playsinline muted></video>
     <canvas id="canvas-3d"></canvas>
 
+    <!-- Interfaz de Portada -->
     <div id="ui">
-        <div id="info">Tomate un momento para vos. Girate y buscá las 4 nubes por la habitación; seguí las flechas si
-            alguna se oculta.</div>
-        <button id="btn-iniciar" class="btn-principal" disabled>CARGANDO MODELOS...</button>
-        <div id="aviso-navegador">💡 Si estás en el celular y da error, abre este enlace directamente en <b>Safari</b> o
-            <b>Chrome</b>.</div>
+        <div class="header-ui">
+            <div class="sub-titulo">Softscape</div>
+            <h1 class="titulo-principal">Nimbloom</h1>
+        </div>
+
+        <div class="caja-instruccion">
+            <p>Investiga a tu alrededor en busca de nubes, arrástralas con el dedo para unirlas en una única nube</p>
+        </div>
+
+        <div class="footer-ui">
+            <button id="btn-iniciar" class="btn-principal" disabled>
+                <span class="triangulo">▶</span> Empezar
+            </button>
+            <div class="aviso-navegador">Si estás en el celular y da error, abre este enlace directamente en Safari o
+                Chrome.</div>
+        </div>
+    </div>
+
+    <!-- Pantalla de carga negra de 3 segundos -->
+    <div id="pantalla-carga">
+        <div class="carga-titulo">Nimbloom</div>
+        <div class="carga-texto-centro">
+            Recuerda seguir las flechas que aparecen en los extremos de la pantalla si no encuentras una nube
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -229,9 +356,10 @@
         const btnIniciar = document.getElementById('btn-iniciar');
         const btnRecalibrar = document.getElementById('btn-recalibrar');
         const btnReiniciar = document.getElementById('btn-reiniciar');
-        const infoDiv = document.getElementById('info');
         const videoElement = document.getElementById('camara-video');
         const contadorDiv = document.getElementById('contador-nubes');
+        const uiDiv = document.getElementById('ui');
+        const pantallaCarga = document.getElementById('pantalla-carga');
 
         const guiaArriba = document.getElementById('guia-arriba');
         const guiaAbajo = document.getElementById('guia-abajo');
@@ -246,7 +374,6 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
-
         let tiempoDosNubes = null;
 
         let modelosBase = [];
@@ -255,15 +382,11 @@
         let textCanvas, textTexture, textMesh;
         let modeloVisualFinal = null;
 
-        // ==========================================
-        // VARIABLES DE AJUSTE
-        // ==========================================
         const ESCALA_MODELO_GLTF = 0.2;
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        const POSICION_MODELO_FINAL = new THREE.Vector3(2, 0.4, -3.5);
-        // ==========================================
+        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, 0.4, -3.5);
 
         const targetQuaternion = new THREE.Quaternion();
         const currentDeviceQuaternion = new THREE.Quaternion();
@@ -295,7 +418,7 @@
                 modelosCargadosCount++;
 
                 if (modelosCargadosCount === archivosModelos.length) {
-                    btnIniciar.innerText = "CONECTAR";
+                    btnIniciar.innerText = "▶ Empezar";
                     btnIniciar.disabled = false;
                 }
 
@@ -306,7 +429,7 @@
 
         btnIniciar.addEventListener('click', async () => {
             try {
-                // 1. PRIMERO PEDIMOS EL PERMISO DE ORIENTACIÓN (Exigido por iOS de forma inmediata al hacer clic)
+                // 1. Pedir permisos de orientación en iOS de forma síncrona al clic
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
                     .requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
@@ -316,46 +439,56 @@
                     }
                 }
 
-                // 2. DESPUÉS PEDIMOS EL ACCESO A LA CÁMARA
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error(
-                        "Tu navegador no soporta el acceso a la cámara. Abrilo desde la app nativa de Safari o Chrome."
-                    );
-                }
+                // 2. Activar Pantalla de Carga de 3 segundos
+                uiDiv.style.display = 'none';
+                pantallaCarga.style.display = 'flex';
 
-                let stream = null;
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: {
-                                ideal: "environment"
-                            }
-                        },
-                        audio: false
+                setTimeout(async () => {
+                    pantallaCarga.style.display = 'none';
+
+                    // 3. Iniciar cámara y entorno 3D
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error("Tu navegador no soporta el acceso a la cámara.");
+                    }
+
+                    let stream = null;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                facingMode: {
+                                    ideal: "environment"
+                                }
+                            },
+                            audio: false
+                        });
+                    } catch (errEnv) {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                            audio: false
+                        });
+                    }
+
+                    videoElement.style.display = 'block';
+                    videoElement.srcObject = stream;
+                    await videoElement.play().catch(() => {});
+
+                    contadorDiv.style.display = 'block';
+                    btnRecalibrar.style.display = 'block';
+
+                    document.fonts.ready.then(() => {
+                        init3D();
+                        window.addEventListener('deviceorientation', handleOrientation,
+                            true);
                     });
-                } catch (errEnv) {
-                    stream = await navigator.mediaDevices.getUserMedia({
-                        video: true,
-                        audio: false
-                    });
-                }
 
-                videoElement.srcObject = stream;
-                await videoElement.play().catch(() => {});
-
-                document.getElementById('ui').style.display = 'none';
-                contadorDiv.style.display = 'block';
-                btnRecalibrar.style.display = 'block';
-
-                document.fonts.ready.then(() => {
-                    init3D();
-                    window.addEventListener('deviceorientation', handleOrientation, true);
-                });
+                }, 3000); // 3 segundos de pantalla de carga
 
             } catch (error) {
+                uiDiv.style.display = 'flex';
+                pantallaCarga.style.display = 'none';
                 alert("Error: " + error.message +
                     "\n\nSi estás en Instagram o WhatsApp, toca los tres puntos y selecciona 'Abrir en Safari/Chrome'."
-                );
+                    );
             }
         });
 
@@ -391,15 +524,14 @@
             }
 
             const posiciones4Nubes = [
-                new THREE.Vector3(0, 0.5, -3.0), // 1. Al frente
-                new THREE.Vector3(3.0, 0.2, -2.0), // 2. A la derecha
-                new THREE.Vector3(-3.0, 0.2, -2.0), // 3. A la izquierda
-                new THREE.Vector3(0, 2.2, 1.5) // 4. Arriba y hacia atrás
+                new THREE.Vector3(0, 0.5, -3.0),
+                new THREE.Vector3(3.0, 0.2, -2.0),
+                new THREE.Vector3(-3.0, 0.2, -2.0),
+                new THREE.Vector3(0, 2.2, 1.5)
             ];
 
             posiciones4Nubes.forEach((pos, index) => {
                 const nubeGrupo = new THREE.Group();
-
                 const modeloAleatorio = modelosBase[Math.floor(Math.random() * modelosBase.length)];
                 const nubeVisual = modeloAleatorio.clone();
 
@@ -468,7 +600,6 @@
             textTexture.minFilter = THREE.LinearFilter;
 
             const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
-
             const planeMat = new THREE.MeshBasicMaterial({
                 map: textTexture,
                 transparent: true,
@@ -479,7 +610,6 @@
 
             textMesh = new THREE.Mesh(planeGeo, planeMat);
             textMesh.renderOrder = 999;
-
             textMesh.position.copy(OFFSET_TEXTO);
             textMesh.scale.set(0.01, 0.01, 0.01);
             camera.add(textMesh);
@@ -511,7 +641,6 @@
             ctx.font = '400 130px "Cherry Bomb One"';
             ctx.fillText('NIMBLOOM', 512, 380);
 
-            // Contador de días, horas, minutos y segundos
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#A558CC';
             ctx.font = '700 95px "Quicksand"';
@@ -519,7 +648,6 @@
                 `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
                 512, 560);
 
-            // Fecha 10 de Octubre
             ctx.fillStyle = '#C2C2F4';
             ctx.font = '700 70px "Quicksand"';
             ctx.fillText('10 DE OCTUBRE', 512, 700);
@@ -527,7 +655,6 @@
             textTexture.needsUpdate = true;
         }
 
-        // Radar visual para orientar al usuario en el giro físico 360°
         function actualizarGuiasVisuales() {
             if (juegoTerminado || nubes.length === 0) {
                 guiaArriba.style.display = 'none';
