@@ -784,13 +784,13 @@
         }
 
         function handleOrientation(event) {
-            // Se invierten ambos signos para que al subir baje, y al mover izquierda vaya a derecha
+            // Se invierte gamma para izquierda/derecha y se deja beta normal para arriba/abajo
             const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
             const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-            const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
+            const gamma = event.gamma ? -THREE.MathUtils.degToRad(event.gamma) : 0;
             const orient = window.orientation ? THREE.MathUtils.degToRad(window.orientation) : 0;
 
-            europaQuaternion.set(-beta, alpha, gamma, 'YXZ');
+            europaQuaternion.set(beta, alpha, gamma, 'YXZ');
             targetQuaternion.setFromEuler(europaQuaternion);
             targetQuaternion.multiply(gq.setFromAxisAngle(zee, -orient));
 
