@@ -144,7 +144,6 @@
         .titulo-principal {
             font-family: 'Cherry Bomb One', cursive;
             font-size: 78px;
-            /* Tamaño original restaurado */
             line-height: 1.1;
             color: #FFFFFF;
             -webkit-text-stroke: 6px #D9AAF1;
@@ -398,13 +397,14 @@
         let juegoTerminado = false;
         let tiempoDosNubes = null;
 
-        let modeloBaseUnico = null; // Único modelo 3D
+        let modeloBaseUnico = null;
         let modeloCargado = false;
 
         let textCanvas, textTexture, textMesh;
         let modeloVisualFinal = null;
 
-        const ESCALA_MODELO_GLTF = 0.2;
+        // Escala aumentada significativamente para el experimento
+        const ESCALA_MODELO_GLTF = 0.45;
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
@@ -424,7 +424,6 @@
 
         const loader = new THREE.GLTFLoader();
 
-        // Cargar únicamente nubeFinal.glb
         loader.load('model/nubeFinal.glb', function (gltf) {
             modeloBaseUnico = gltf.scene;
 
@@ -788,7 +787,8 @@
         function handleOrientation(event) {
             const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
             const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-            const gamma = event.gamma ? THREE.MathUtils.degToRad(event.gamma) : 0;
+            // Se invierte el signo de gamma para que el movimiento de las nubes sea invertido
+            const gamma = event.gamma ? -THREE.MathUtils.degToRad(event.gamma) : 0;
             const orient = window.orientation ? THREE.MathUtils.degToRad(window.orientation) : 0;
 
             europaQuaternion.set(beta, alpha, -gamma, 'YXZ');
