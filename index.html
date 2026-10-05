@@ -407,8 +407,8 @@
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        // Nube final perfectamente centrada frente a la cámara
-        const POSICION_MODELO_FINAL = new THREE.Vector3(0.0, 0.4, -3.5);
+        // Posición final centrada y bajada un poco (-0.2 en Y)
+        const POSICION_MODELO_FINAL = new THREE.Vector3(0.0, -0.2, -3.5);
 
         const targetQuaternion = new THREE.Quaternion();
         const currentDeviceQuaternion = new THREE.Quaternion();
@@ -648,7 +648,6 @@
 
             const ahora = new Date();
             let anioActual = ahora.getFullYear();
-            // Objetivo ajustado al 14 de noviembre
             let objetivo = new Date(anioActual, 10, 14, 0, 0, 0);
             if (ahora > objetivo) objetivo = new Date(anioActual + 1, 10, 14, 0, 0, 0);
 
@@ -822,7 +821,8 @@
                 nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
 
                 if (modeloVisualFinal) {
-                    const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, 0));
+                    // Rotación de 90 grados adicionales (Math.PI / 2 + Math.PI / 2 = Math.PI)
+                    const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                     modeloVisualFinal.quaternion.slerp(targetRotModelo, 0.04);
                 }
 
