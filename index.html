@@ -165,14 +165,15 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        /* Texto totalmente violeta sin borde amarillo */
         .caja-instruccion p {
             font-family: 'Quicksand', sans-serif;
-            color: #A558CC;
+            color: #FFFEAE;
             font-size: 21px;
             font-weight: 700;
             line-height: 1.45;
             margin: 0;
+            -webkit-text-stroke: 1.2px #D9AAF1;
+            paint-order: stroke fill;
         }
 
         .footer-ui {
@@ -381,6 +382,7 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
+        let tiempoDosNubes = null; 
 
         let modeloBaseUnico = null;
         let modeloCargado = false;
@@ -457,4 +459,172 @@
                     }, 500);
 
                     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                        throw new Error("
+                        throw new Error("Tu navegador no soporta el acceso a la cámara.");
+                    }
+
+                    let stream = null;
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: { ideal: "environment" } },
+                            audio: false
+                        });
+                    } catch (errEnv) {
+                        stream = await navigator.mediaDevices.getUserMedia({
+                            video: true,
+                            audio: false
+                        });
+                    }
+
+                    videoElement.style.display = 'block';
+                    videoElement.srcObject = stream;
+                    await videoElement.play().catch(() => {});
+
+                    contadorDiv.style.display = 'block';
+                    btnRecalibrar.style.display = 'block';
+
+                    document.fonts.ready.then(() => {
+                        init3D();
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                    });
+
+                }, 3000);
+
+            } catch (error) {
+                uiDiv.style.display = 'flex';
+                uiDiv.style.opacity = '1';
+                pantallaCarga.style.display = 'none';
+                alert("Error: " + error.message + "\n\nSi estás en Instagram o WhatsApp, toca los tres puntos y selecciona 'Abrir en Safari/Chrome'.");
+            }
+        });
+
+        btnRecalibrar.addEventListener('click', () => {
+            isCalibrated = false;
+        });
+
+        btnReiniciar.addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            scene.add(camera);
+
+            const canvas = document.getElementById('canvas-3d');
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            if (!scene.getObjectByName('luzAmbiental')) {
+                const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+                ambientLight.name = 'luzAmbiental';
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.8);
+                directionalLight.position.set(5, 12, 8);
+                scene.add(directionalLight);
+            }
+
+            const posiciones4Nubes = [
+                new THREE.Vector3(0, 0.5, -3.0),    
+                new THREE.Vector3(3.0, 0.2, -2.0),  
+                new THREE.Vector3(-3.0, 0.2, -2.0), 
+                new THREE.Vector3(0, 2.2, 1.5)      
+            ];
+
+            posiciones4Nubes.forEach((pos, index) => {
+                const nubeGrupo = new THREE.Group();
+                const nubeVisual = modeloBaseUnico.clone();
+                
+                nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
+                nubeVisual.rotation.y = Math.PI;
+
+                nubeGrupo.add(nubeVisual);
+                nubeGrupo.position.copy(pos);
+                nubeGrupo.userData = { id: index, tamano: 1 };
+
+                scene.add(nubeGrupo);
+                nubes.push(nubeGrupo);
+            });
+
+            actualizarContador();
+
+            window.addEventListener('pointerdown', onPointerDown, false);
+            window.addEventListener('pointermove', onPointerMove, false);
+            window.addEventListener('pointerup', onPointerUp, false);
+            window.addEventListener('resize', onWindowResize, false);
+
+            animate();
+        }
+
+        function onPointerDown(event) {
+            if (juegoTerminado) return;
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(nubes, true);
+
+            if (intersects.length > 0) {
+                let obj = intersects[0].object;
+                while (obj.parent && obj.parent !== scene) {
+                    obj = obj.parent;
+                }
+                nubeArrastrada = obj;
+                nubeArrastrada.userData.distanciaFija = nubeArrastrada.position.distanceTo(camera.position);
+            }
+        }
+
+        function onPointerMove(event) {
+            if (!nubeArrastrada || juegoTerminado) return;
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const dirRayo = raycaster.ray.direction.clone();
+            nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData.distanciaFija));
+        }
+
+        function onPointerUp() {
+            nubeArrastrada = null;
+        }
+
+        function crearLienzoTextoIndependiente() {
+            textCanvas = document.createElement('canvas');
+            textCanvas.width = 1024;
+            textCanvas.height = 1024;
+            textTexture = new THREE.CanvasTexture(textCanvas);
+            textTexture.minFilter = THREE.LinearFilter;
+
+            const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
+            const planeMat = new THREE.MeshBasicMaterial({
+                map: textTexture,
+                transparent: true,
+                depthWrite: false,
+                depthTest: false,
+                side: THREE.DoubleSide 
+            });
+
+            textMesh = new THREE.Mesh(planeGeo, planeMat);
+            textMesh.renderOrder = 999;
+            textMesh.position.copy(OFFSET_TEXTO);
+            textMesh.scale.set(0.01, 0.01, 0.01);
+            camera.add(textMesh);
+        }
+
+        function actualizarTexturaNube() {
+            if (!textCanvas) return;
+            const ctx = textCanvas.getContext('2d');
+            ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+
+            const ahora = new Date();
+            let anioActual = ahora.getFullYear();
+            let objetivo = new Date(anioActual, 10, 14, 0, 0, 0);
+            if (ahora > objetivo) objetivo = new Date(anioActual + 1, 10, 14, 0, 0, 0);
+
+            const dif = objetivo - ahora;
+            const dias = Math.floor(dif / (1000 * 60 * 60 * 24));
+            const horas = Math.floor
