@@ -127,25 +127,26 @@
         .header-ui {
             text-align: center;
             pointer-events: auto;
-            transition: all 0.8s ease;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .sub-titulo {
+            font-family: 'Quicksand', sans-serif;
             color: #FFFFFF;
             opacity: 0.5;
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 600;
             letter-spacing: 2px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .titulo-principal {
             font-family: 'Cherry Bomb One', cursive;
-            font-size: 55px;
+            font-size: 64px;
             color: #FFFFFF;
-            -webkit-text-stroke: 2px #D9AAF1;
-            text-shadow: 0 0 20px rgba(217, 170, 241, 0.6);
+            -webkit-text-stroke: 2.5px #D9AAF1;
+            text-shadow: 0 0 25px rgba(217, 170, 241, 0.6);
+            letter-spacing: 3px;
             margin: 0;
         }
 
@@ -153,19 +154,20 @@
             background-color: #FFFFFF;
             border: 2px solid #D9AAF1;
             border-radius: 20px;
-            padding: 20px;
-            max-width: 340px;
+            padding: 22px 24px;
+            max-width: 350px;
             text-align: center;
             pointer-events: auto;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
         .caja-instruccion p {
+            font-family: 'Quicksand', sans-serif;
             color: #FFFEAE;
-            -webkit-text-stroke: 0.5px #D9AAF1;
-            font-size: 15px;
+            -webkit-text-stroke: 0.6px #D9AAF1;
+            font-size: 17px;
             font-weight: 700;
-            line-height: 1.4;
+            line-height: 1.45;
             margin: 0;
         }
 
@@ -181,20 +183,20 @@
             border: 2px solid #D9AAF1;
             color: #FFFEAE;
             -webkit-text-stroke: 0.6px #D9AAF1;
-            padding: 14px 25px;
+            padding: 12px 30px;
             font-size: 20px;
             font-weight: 700;
             border-radius: 35px;
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
             cursor: pointer;
-            width: 100%;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
             font-family: 'Quicksand', sans-serif;
+            white-space: nowrap;
+            margin: 0 auto 15px auto;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
         }
 
         .btn-principal:disabled {
@@ -204,11 +206,12 @@
 
         .btn-principal span.triangulo {
             color: #FFFEAE;
-            font-size: 18px;
+            font-size: 16px;
             text-shadow: 0 0 5px #D9AAF1;
         }
 
         .aviso-navegador {
+            font-family: 'Quicksand', sans-serif;
             color: #FFFEAE;
             -webkit-text-stroke: 0.4px #D9AAF1;
             font-size: 13px;
@@ -242,7 +245,7 @@
             -webkit-text-stroke: 2px #D9AAF1;
             opacity: 0.5;
             position: absolute;
-            top: 70px;
+            top: 60px;
             animation: subirTitulo 0.8s ease forwards;
         }
 
@@ -256,13 +259,31 @@
             }
         }
 
+        .carga-nube-img {
+            width: 130px;
+            height: auto;
+            margin-bottom: 25px;
+            animation: flotarNube 2s infinite alternate ease-in-out;
+        }
+
+        @keyframes flotarNube {
+            0% {
+                transform: translateY(0px);
+            }
+
+            100% {
+                transform: translateY(-12px);
+            }
+        }
+
         .carga-texto-centro {
+            font-family: 'Quicksand', sans-serif;
             color: #FFFEAE;
             -webkit-text-stroke: 0.5px #D9AAF1;
-            font-size: 20px;
+            font-size: 17px;
             font-weight: 700;
             line-height: 1.5;
-            max-width: 340px;
+            max-width: 320px;
             animation: latidoOpacidad 1.5s infinite alternate ease-in-out;
         }
 
@@ -344,6 +365,7 @@
     <!-- Pantalla de carga negra de 3 segundos -->
     <div id="pantalla-carga">
         <div class="carga-titulo">Nimbloom</div>
+        <img src="img/carga_nube.png" alt="Nube" class="carga-nube-img" onerror="this.style.display='none'">
         <div class="carga-texto-centro">
             Recuerda seguir las flechas que aparecen en los extremos de la pantalla si no encuentras una nube
         </div>
@@ -429,7 +451,6 @@
 
         btnIniciar.addEventListener('click', async () => {
             try {
-                // 1. Pedir permisos de orientación en iOS de forma síncrona al clic
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
                     .requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
@@ -439,14 +460,12 @@
                     }
                 }
 
-                // 2. Activar Pantalla de Carga de 3 segundos
                 uiDiv.style.display = 'none';
                 pantallaCarga.style.display = 'flex';
 
                 setTimeout(async () => {
                     pantallaCarga.style.display = 'none';
 
-                    // 3. Iniciar cámara y entorno 3D
                     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                         throw new Error("Tu navegador no soporta el acceso a la cámara.");
                     }
@@ -481,7 +500,7 @@
                             true);
                     });
 
-                }, 3000); // 3 segundos de pantalla de carga
+                }, 3000);
 
             } catch (error) {
                 uiDiv.style.display = 'flex';
@@ -634,7 +653,6 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // Título NIMBLOOM: Resplandor violeta con letras interiores blancas
             ctx.shadowColor = 'rgba(165, 88, 204, 0.95)';
             ctx.shadowBlur = 20;
             ctx.fillStyle = '#FFFFFF';
