@@ -113,7 +113,7 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            display: none;
+            display: none; 
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
@@ -162,18 +162,17 @@
             max-width: 340px;
             text-align: center;
             pointer-events: auto;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
+        /* Texto totalmente violeta sin borde amarillo */
         .caja-instruccion p {
             font-family: 'Quicksand', sans-serif;
-            color: #FFFEAE;
+            color: #A558CC;
             font-size: 21px;
             font-weight: 700;
             line-height: 1.45;
             margin: 0;
-            -webkit-text-stroke: 1.2px #D9AAF1;
-            paint-order: stroke fill;
         }
 
         .footer-ui {
@@ -193,7 +192,7 @@
             font-size: 20px;
             font-weight: 700;
             border-radius: 35px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -224,7 +223,7 @@
             font-size: 13px;
             font-weight: 600;
             line-height: 1.4;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.6);
         }
 
         /* PANTALLA DE CARGA / TRANSICIÓN INICIAL */
@@ -265,13 +264,8 @@
         }
 
         @keyframes flotarNube {
-            0% {
-                transform: translateY(0px);
-            }
-
-            100% {
-                transform: translateY(-12px);
-            }
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-12px); }
         }
 
         .carga-texto-centro {
@@ -287,15 +281,8 @@
         }
 
         @keyframes latidoOpacidad {
-            0% {
-                opacity: 0.5;
-                transform: scale(0.98);
-            }
-
-            100% {
-                opacity: 1.0;
-                transform: scale(1.02);
-            }
+            0% { opacity: 0.5; transform: scale(0.98); }
+            100% { opacity: 1.0; transform: scale(1.02); }
         }
 
         #btn-reiniciar {
@@ -311,7 +298,7 @@
             font-size: 16px;
             font-weight: 700;
             border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             cursor: pointer;
             display: none;
             pointer-events: auto;
@@ -365,8 +352,7 @@
             <button id="btn-iniciar" class="btn-principal" disabled>
                 <span class="triangulo">▶</span> Empezar
             </button>
-            <div class="aviso-navegador">Si estás en el celular y da error, abre este enlace directamente en Safari o
-                Chrome.</div>
+            <div class="aviso-navegador">Si estás en el celular y da error, abre este enlace directamente en Safari o Chrome.</div>
         </div>
     </div>
 
@@ -395,7 +381,6 @@
 
         let isCalibrated = false;
         let juegoTerminado = false;
-        let tiempoDosNubes = null;
 
         let modeloBaseUnico = null;
         let modeloCargado = false;
@@ -405,8 +390,8 @@
 
         const ESCALA_MODELO_GLTF = 0.45;
         const TAMAÑO_TEXTO = 0.8;
-
-        const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
+        
+        const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2); 
         const POSICION_MODELO_FINAL = new THREE.Vector3(0.0, -0.2, -3.5);
 
         const targetQuaternion = new THREE.Quaternion();
@@ -422,7 +407,7 @@
         };
 
         const loader = new THREE.GLTFLoader();
-
+        
         loader.load('model/nubeFinal.glb', function (gltf) {
             modeloBaseUnico = gltf.scene;
 
@@ -436,7 +421,7 @@
             modeloCargado = true;
             btnIniciar.innerText = "▶ Empezar";
             btnIniciar.disabled = false;
-
+            
             uiDiv.style.display = 'flex';
             setTimeout(() => {
                 uiDiv.style.opacity = '1';
@@ -452,8 +437,7 @@
 
         btnIniciar.addEventListener('click', async () => {
             try {
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent
-                    .requestPermission === 'function') {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
                     if (permissionState !== 'granted') {
                         alert("Se requieren permisos de movimiento para la experiencia AR.");
@@ -473,379 +457,4 @@
                     }, 500);
 
                     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                        throw new Error("Tu navegador no soporta el acceso a la cámara.");
-                    }
-
-                    let stream = null;
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: {
-                                facingMode: {
-                                    ideal: "environment"
-                                }
-                            },
-                            audio: false
-                        });
-                    } catch (errEnv) {
-                        stream = await navigator.mediaDevices.getUserMedia({
-                            video: true,
-                            audio: false
-                        });
-                    }
-
-                    videoElement.style.display = 'block';
-                    videoElement.srcObject = stream;
-                    await videoElement.play().catch(() => {});
-
-                    contadorDiv.style.display = 'block';
-                    btnRecalibrar.style.display = 'block';
-
-                    document.fonts.ready.then(() => {
-                        init3D();
-                        window.addEventListener('deviceorientation', handleOrientation,
-                            true);
-                    });
-
-                }, 3000);
-
-            } catch (error) {
-                uiDiv.style.display = 'flex';
-                uiDiv.style.opacity = '1';
-                pantallaCarga.style.display = 'none';
-                alert("Error: " + error.message +
-                    "\n\nSi estás en Instagram o WhatsApp, toca los tres puntos y selecciona 'Abrir en Safari/Chrome'."
-                    );
-            }
-        });
-
-        btnRecalibrar.addEventListener('click', () => {
-            isCalibrated = false;
-        });
-
-        btnReiniciar.addEventListener('click', () => {
-            window.location.reload();
-        });
-
-        function init3D() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            scene.add(camera);
-
-            const canvas = document.getElementById('canvas-3d');
-            renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                alpha: true
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            if (!scene.getObjectByName('luzAmbiental')) {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-                ambientLight.name = 'luzAmbiental';
-                scene.add(ambientLight);
-
-                const directionalLight = new THREE.DirectionalLight(COLORES.lavanda, 0.8);
-                directionalLight.position.set(5, 12, 8);
-                scene.add(directionalLight);
-            }
-
-            const posiciones4Nubes = [
-                new THREE.Vector3(0, 0.5, -3.0),
-                new THREE.Vector3(3.0, 0.2, -2.0),
-                new THREE.Vector3(-3.0, 0.2, -2.0),
-                new THREE.Vector3(0, 2.2, 1.5)
-            ];
-
-            posiciones4Nubes.forEach((pos, index) => {
-                const nubeGrupo = new THREE.Group();
-                const nubeVisual = modeloBaseUnico.clone();
-
-                nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
-                // Nubes de búsqueda rotadas 90 grados adicionales (Math.PI / 2 + Math.PI / 2 = Math.PI)
-                nubeVisual.rotation.y = Math.PI;
-
-                nubeGrupo.add(nubeVisual);
-                nubeGrupo.position.copy(pos);
-                nubeGrupo.userData = {
-                    id: index,
-                    tamano: 1
-                };
-
-                scene.add(nubeGrupo);
-                nubes.push(nubeGrupo);
-            });
-
-            actualizarContador();
-
-            window.addEventListener('pointerdown', onPointerDown, false);
-            window.addEventListener('pointermove', onPointerMove, false);
-            window.addEventListener('pointerup', onPointerUp, false);
-            window.addEventListener('resize', onWindowResize, false);
-
-            animate();
-        }
-
-        function onPointerDown(event) {
-            if (juegoTerminado) return;
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(nubes, true);
-
-            if (intersects.length > 0) {
-                let obj = intersects[0].object;
-                while (obj.parent && obj.parent !== scene) {
-                    obj = obj.parent;
-                }
-                nubeArrastrada = obj;
-                nubeArrastrada.userData.distanciaFija = nubeArrastrada.position.distanceTo(camera.position);
-            }
-        }
-
-        function onPointerMove(event) {
-            if (!nubeArrastrada || juegoTerminado) return;
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const dirRayo = raycaster.ray.direction.clone();
-            nubeArrastrada.position.copy(camera.position).add(dirRayo.multiplyScalar(nubeArrastrada.userData
-                .distanciaFija));
-        }
-
-        function onPointerUp() {
-            nubeArrastrada = null;
-        }
-
-        function crearLienzoTextoIndependiente() {
-            textCanvas = document.createElement('canvas');
-            textCanvas.width = 1024;
-            textCanvas.height = 1024;
-            textTexture = new THREE.CanvasTexture(textCanvas);
-            textTexture.minFilter = THREE.LinearFilter;
-
-            const planeGeo = new THREE.PlaneGeometry(TAMAÑO_TEXTO, TAMAÑO_TEXTO);
-            const planeMat = new THREE.MeshBasicMaterial({
-                map: textTexture,
-                transparent: true,
-                depthWrite: false,
-                depthTest: false,
-                side: THREE.DoubleSide
-            });
-
-            textMesh = new THREE.Mesh(planeGeo, planeMat);
-            textMesh.renderOrder = 999;
-            textMesh.position.copy(OFFSET_TEXTO);
-            textMesh.scale.set(0.01, 0.01, 0.01);
-            camera.add(textMesh);
-        }
-
-        function actualizarTexturaNube() {
-            if (!textCanvas) return;
-            const ctx = textCanvas.getContext('2d');
-            ctx.clearRect(0, 0, textCanvas.width, textCanvas.height);
-
-            const ahora = new Date();
-            let anioActual = ahora.getFullYear();
-            let objetivo = new Date(anioActual, 10, 14, 0, 0, 0);
-            if (ahora > objetivo) objetivo = new Date(anioActual + 1, 10, 14, 0, 0, 0);
-
-            const dif = objetivo - ahora;
-            const dias = Math.floor(dif / (1000 * 60 * 60 * 24));
-            const horas = Math.floor((dif % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutos = Math.floor((dif % (1000 * 60 * 60)) / (1000 * 60));
-            const segundos = Math.floor((dif % (1000 * 60)) / 1000);
-
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            ctx.shadowColor = 'rgba(165, 88, 204, 0.95)';
-            ctx.shadowBlur = 20;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '400 130px "Cherry Bomb One"';
-            ctx.fillText('NIMBLOOM', 512, 380);
-
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#A558CC';
-            ctx.font = '700 95px "Quicksand"';
-            ctx.fillText(
-                `${dias}d ${String(horas).padStart(2, '0')}h ${String(minutos).padStart(2, '0')}m ${String(segundos).padStart(2, '0')}s`,
-                512, 560);
-
-            ctx.fillStyle = '#C2C2F4';
-            ctx.font = '700 70px "Quicksand"';
-            ctx.fillText('14 DE NOVIEMBRE', 512, 700);
-
-            textTexture.needsUpdate = true;
-        }
-
-        function actualizarGuiasVisuales() {
-            if (juegoTerminado || nubes.length === 0) {
-                guiaArriba.style.display = 'none';
-                guiaAbajo.style.display = 'none';
-                guiaIzquierda.style.display = 'none';
-                guiaDerecha.style.display = 'none';
-                return;
-            }
-
-            let mostrarArriba = false;
-            let mostrarAbajo = false;
-            let mostrarIzquierda = false;
-            let mostrarDerecha = false;
-
-            const vectorTemp = new THREE.Vector3();
-
-            nubes.forEach(nube => {
-                vectorTemp.copy(nube.position);
-                vectorTemp.project(camera);
-
-                if (vectorTemp.z > 1) {
-                    if (vectorTemp.x < 0) mostrarDerecha = true;
-                    else mostrarIzquierda = true;
-                    return;
-                }
-
-                if (vectorTemp.y > 0.9) mostrarArriba = true;
-                if (vectorTemp.y < -0.9) mostrarAbajo = true;
-                if (vectorTemp.x < -0.9) mostrarIzquierda = true;
-                if (vectorTemp.x > 0.9) mostrarDerecha = true;
-            });
-
-            guiaArriba.style.display = mostrarArriba ? 'block' : 'none';
-            guiaAbajo.style.display = mostrarAbajo ? 'block' : 'none';
-            guiaIzquierda.style.display = mostrarIzquierda ? 'block' : 'none';
-            guiaDerecha.style.display = mostrarDerecha ? 'block' : 'none';
-        }
-
-        function verificarFusion() {
-            if (juegoTerminado) return;
-
-            if (nubes.length === 2) {
-                if (!tiempoDosNubes) {
-                    tiempoDosNubes = Date.now();
-                } else if (nubeArrastrada === null && (Date.now() - tiempoDosNubes >= 5000)) {
-                    nubes[1].position.lerp(nubes[0].position, 0.0015);
-                }
-            } else {
-                tiempoDosNubes = null;
-            }
-
-            for (let i = 0; i < nubes.length; i++) {
-                for (let j = i + 1; j < nubes.length; j++) {
-                    const n1 = nubes[i];
-                    const n2 = nubes[j];
-
-                    const distancia = n1.position.distanceTo(n2.position);
-                    const umbralFusion = 1.2;
-
-                    if (distancia < umbralFusion) {
-                        n1.userData.tamano += n2.userData.tamano;
-
-                        const baseScale = ESCALA_MODELO_GLTF;
-                        const growthFactor = Math.cbrt(n1.userData.tamano);
-                        const nuevaEscala = baseScale * growthFactor;
-                        n1.children[0].scale.set(nuevaEscala, nuevaEscala, nuevaEscala);
-
-                        scene.remove(n2);
-                        nubes.splice(j, 1);
-                        actualizarContador();
-
-                        if (nubes.length === 1) {
-                            juegoTerminado = true;
-                            contadorDiv.style.display = 'none';
-                            btnRecalibrar.style.display = 'none';
-                            btnReiniciar.style.display = 'block';
-                            guiaArriba.style.display = 'none';
-                            guiaAbajo.style.display = 'none';
-                            guiaIzquierda.style.display = 'none';
-                            guiaDerecha.style.display = 'none';
-
-                            const nubeFinal = nubes[0];
-                            const modeloFijoBase = modeloBaseUnico.clone();
-
-                            nubeFinal.remove(nubeFinal.children[0]);
-                            nubeFinal.add(modeloFijoBase);
-                            modeloVisualFinal = modeloFijoBase;
-
-                            // Escala de la nube final aumentada ligeramente
-                            const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 2.1;
-                            modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
-
-                            crearLienzoTextoIndependiente();
-                            camera.attach(nubeFinal);
-                        }
-                        return;
-                    }
-                }
-            }
-        }
-
-        function actualizarContador() {
-            contadorDiv.innerText = "Nubes: " + nubes.length;
-        }
-
-        function handleOrientation(event) {
-            const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
-            const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
-            const gamma = event.gamma ? -THREE.MathUtils.degToRad(event.gamma) : 0;
-            const orient = window.orientation ? THREE.MathUtils.degToRad(window.orientation) : 0;
-
-            europaQuaternion.set(beta, alpha, gamma, 'YXZ');
-            targetQuaternion.setFromEuler(europaQuaternion);
-            targetQuaternion.multiply(gq.setFromAxisAngle(zee, -orient));
-
-            if (!isCalibrated) {
-                correctionQuaternion.copy(targetQuaternion).invert();
-                isCalibrated = true;
-            }
-
-            let tempQuat = new THREE.Quaternion().copy(targetQuaternion).premultiply(correctionQuaternion);
-            currentDeviceQuaternion.copy(tempQuat);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            camera.quaternion.slerp(currentDeviceQuaternion, 0.08);
-
-            if (juegoTerminado && nubes.length > 0) {
-                const nubeFinal = nubes[0];
-
-                nubeFinal.position.lerp(POSICION_MODELO_FINAL, 0.04);
-
-                if (textMesh) {
-                    const textoScale = 2.8;
-                    textMesh.scale.lerp(new THREE.Vector3(textoScale, textoScale, textoScale), 0.03);
-                }
-
-                nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
-
-                if (modeloVisualFinal) {
-                    const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
-                    modeloVisualFinal.quaternion.slerp(targetRotModelo, 0.04);
-                }
-
-                actualizarTexturaNube();
-            } else {
-                nubes.forEach(nube => {
-                    if (nube !== nubeArrastrada) {
-                        nube.lookAt(camera.position);
-                    }
-                });
-                actualizarGuiasVisuales();
-            }
-
-            verificarFusion();
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-    </script>
-</body>
-
-</html>
+                        throw new Error("
