@@ -407,7 +407,6 @@
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        // Posición final centrada y bajada un poco (-0.2 en Y)
         const POSICION_MODELO_FINAL = new THREE.Vector3(0.0, -0.2, -3.5);
 
         const targetQuaternion = new THREE.Quaternion();
@@ -562,7 +561,8 @@
                 const nubeVisual = modeloBaseUnico.clone();
 
                 nubeVisual.scale.set(ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF, ESCALA_MODELO_GLTF);
-                nubeVisual.rotation.y = Math.PI / 2;
+                // Nubes de búsqueda rotadas 90 grados adicionales (Math.PI / 2 + Math.PI / 2 = Math.PI)
+                nubeVisual.rotation.y = Math.PI;
 
                 nubeGrupo.add(nubeVisual);
                 nubeGrupo.position.copy(pos);
@@ -768,7 +768,8 @@
                             nubeFinal.add(modeloFijoBase);
                             modeloVisualFinal = modeloFijoBase;
 
-                            const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 1.8;
+                            // Escala de la nube final aumentada ligeramente
+                            const finalScale = ESCALA_MODELO_GLTF * Math.cbrt(nubeFinal.userData.tamano) * 2.1;
                             modeloVisualFinal.scale.set(finalScale, finalScale, finalScale);
 
                             crearLienzoTextoIndependiente();
@@ -821,7 +822,6 @@
                 nubeFinal.quaternion.slerp(new THREE.Quaternion(), 0.04);
 
                 if (modeloVisualFinal) {
-                    // Rotación de 90 grados adicionales (Math.PI / 2 + Math.PI / 2 = Math.PI)
                     const targetRotModelo = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI, 0));
                     modeloVisualFinal.quaternion.slerp(targetRotModelo, 0.04);
                 }
