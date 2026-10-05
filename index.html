@@ -407,7 +407,8 @@
         const TAMAÑO_TEXTO = 0.8;
 
         const OFFSET_TEXTO = new THREE.Vector3(0.0, 0.0, -3.2);
-        const POSICION_MODELO_FINAL = new THREE.Vector3(1.5, 0.4, -3.5);
+        // Nube final perfectamente centrada frente a la cámara
+        const POSICION_MODELO_FINAL = new THREE.Vector3(0.0, 0.4, -3.5);
 
         const targetQuaternion = new THREE.Quaternion();
         const currentDeviceQuaternion = new THREE.Quaternion();
@@ -647,8 +648,9 @@
 
             const ahora = new Date();
             let anioActual = ahora.getFullYear();
-            let objetivo = new Date(anioActual, 9, 10, 0, 0, 0);
-            if (ahora > objetivo) objetivo = new Date(anioActual + 1, 9, 10, 0, 0, 0);
+            // Objetivo ajustado al 14 de noviembre
+            let objetivo = new Date(anioActual, 10, 14, 0, 0, 0);
+            if (ahora > objetivo) objetivo = new Date(anioActual + 1, 10, 14, 0, 0, 0);
 
             const dif = objetivo - ahora;
             const dias = Math.floor(dif / (1000 * 60 * 60 * 24));
@@ -674,7 +676,7 @@
 
             ctx.fillStyle = '#C2C2F4';
             ctx.font = '700 70px "Quicksand"';
-            ctx.fillText('10 DE OCTUBRE', 512, 700);
+            ctx.fillText('14 DE NOVIEMBRE', 512, 700);
 
             textTexture.needsUpdate = true;
         }
@@ -784,7 +786,6 @@
         }
 
         function handleOrientation(event) {
-            // Se invierte gamma para izquierda/derecha y se deja beta normal para arriba/abajo
             const alpha = event.alpha ? THREE.MathUtils.degToRad(event.alpha) : 0;
             const beta = event.beta ? THREE.MathUtils.degToRad(event.beta) : 0;
             const gamma = event.gamma ? -THREE.MathUtils.degToRad(event.gamma) : 0;
